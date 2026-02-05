@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <title>MOTU Digital Signage</title>
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="./css/layout.css" />
+  <link rel="stylesheet" href="./css/layout.css?v=7" />
 </head>
 
 <body>
-  <h1>MOTU Digital Signage</h1>
+  <header>
+    <h1>MOTU Digital Signage</h1>
+    <div id="clock"></div>
+  </header>
 
-  <div id="container">
-    <div id="panelA">
+  <main id="container">
+    <section id="panelA">
       <video
         id="panelAVideo"
         src="./panelA/panelA.mp4"
@@ -21,9 +22,9 @@
         loop
         playsinline>
       </video>
-    </div>
+    </section>
 
-    <div id="panelB">
+    <section id="panelB">
       <div id="newsBox">
         <h2>Today's Top News</h2>
         <div id="newsTrack">Loading news...</div>
@@ -38,18 +39,18 @@
         <h2>Upcoming Events</h2>
         <div id="calendarTrack">Loading calendar...</div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <div id="ticker">
+  <footer id="ticker">
     <span id="tickerText">Loading...</span>
-  </div>
+  </footer>
 
-  <!-- JS (ALL RELATIVE PATHS) -->
-  <script src="./js/news.js"></script>
-  <script src="./js/weather.js"></script>
-  <script src="./js/calendar.js"></script>
-  <script src="./js/ticker.js"></script>
-  <script src="./js/clock.js"></script>
+  <!-- JS (cache-busted) -->
+  <script src="./js/clock.js?v=7"></script>
+  <script src="./js/news.js?v=7"></script>
+  <script src="./js/weather.js?v=7"></script>
+  <script src="./js/calendar.js?v=7"></script>
+  <script src="./js/ticker.js?v=7"></script>
 </body>
 </html>
