@@ -7,7 +7,7 @@
 
   fetch(NEWS_ENDPOINT + "?t=" + Date.now(), { cache: "no-store" })
     .then(r => {
-      if (!r.ok) throw new Error("news fetch failed");
+      if (!r.ok) throw new Error("News fetch failed");
       return r.text();
     })
     .then(xmlText => {
