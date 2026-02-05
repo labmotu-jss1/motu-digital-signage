@@ -2,49 +2,42 @@
   const box = document.getElementById("newsTrack");
   if (!box) return;
 
-  // PROOF THIS FILE IS RUNNING (you will see this instantly)
-  box.textContent = "NEWS JS RUNNING...";
+  box.textContent = "Loading headlines...";
 
-  const WORKER_BASE = "https://tight-frog-b4c7.lab-motu.workers.dev";
-  const url = `${WORKER_BASE}/news?t=${Date.now()}`;
+  const WORKER = "https://tight-frog-b4c7.lab-motu.workers.dev/news";
 
-  fetch(url, { cache: "no-store" })
+  fetch(`${WORKER}?t=${Date.now()}`, { cache: "no-store" })
     .then(r => {
-      if (!r.ok) throw new Error(`News HTTP ${r.status}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.text();
     })
     .then(xmlText => {
       const parser = new DOMParser();
       const xml = parser.parseFromString(xmlText, "application/xml");
 
-      // If parse failed, browsers often create a <parsererror> node
-      const parseError = xml.querySelector("parsererror");
-      if (parseError) {
-        box.textContent = "NEWS PARSE ERROR";
-        console.warn("NEWS parse error", parseError.textContent);
+      if (xml.querySelector("parsererror")) {
+        box.textContent = "News feed error";
         return;
       }
 
       const items = Array.from(xml.querySelectorAll("item"));
       if (!items.length) {
-        box.textContent = "No news items found";
+        box.textContent = "No news available";
         return;
       }
 
       box.innerHTML = "";
-
-      items.slice(0, 8).forEach(item => {
-        const title = (item.querySelector("title")?.textContent || "").trim();
+      items.slice(0, 6).forEach(item => {
+        const title = item.querySelector("title")?.textContent?.trim();
         if (!title) return;
 
-        const row = document.createElement("div");
-        row.style.marginBottom = "10px";
-        row.textContent = "• " + title;
-        box.appendChild(row);
+        const div = document.createElement("div");
+        div.textContent = "• " + title;
+        div.style.marginBottom = "8px";
+        box.appendChild(div);
       });
     })
-    .catch(err => {
-      console.warn("News error:", err);
+    .catch(() => {
       box.textContent = "News unavailable";
     });
 })();
