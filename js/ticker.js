@@ -1,19 +1,12 @@
 (() => {
-  const el = document.getElementById("tickerText");
-  if (!el) {
-    console.error("Ticker element not found");
-    return;
-  }
+  const ticker = document.getElementById("tickerText");
+  if (!ticker) return;
 
-  // VISUAL PROOF THE SCRIPT IS RUNNING
-  el.textContent = "TICKER INITIALIZING...";
-  el.style.color = "#00ffcc";
+  const SPEED = 1; // pixels per frame (adjust if needed)
+  let pos = window.innerWidth;
 
   fetch("/motu-digital-signage/TextTicker.txt?ts=" + Date.now())
-    .then(r => {
-      if (!r.ok) throw new Error("Ticker fetch failed");
-      return r.text();
-    })
+    .then(r => r.text())
     .then(text => {
       const clean = text
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
@@ -21,22 +14,26 @@
         .replace(/<[^>]+>/g, "")
         .trim();
 
-      if (!clean) {
-        el.textContent = "TICKER EMPTY";
-        return;
+      if (!clean) return;
+
+      ticker.textContent = clean;
+      ticker.style.position = "relative";
+      ticker.style.left = pos + "px";
+
+      function tick() {
+        pos -= SPEED;
+
+        if (pos < -ticker.offsetWidth) {
+          pos = window.innerWidth;
+        }
+
+        ticker.style.left = pos + "px";
+        requestAnimationFrame(tick);
       }
 
-      el.textContent = clean;
-      el.style.color = "#ffffff";
-
-      // FORCE animation reset
-      el.classList.remove("ticker-run");
-      void el.offsetWidth; // hard reflow
-      el.classList.add("ticker-run");
+      requestAnimationFrame(tick);
     })
-    .catch(err => {
-      console.error("Ticker error:", err);
-      el.textContent = "TICKER ERROR";
-      el.style.color = "red";
+    .catch(() => {
+      ticker.textContent = "TICKER ERROR";
     });
 })();
