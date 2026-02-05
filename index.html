@@ -7,14 +7,13 @@
 </head>
 
 <body>
-  <!-- HEADER -->
   <header>
-    <div id="clock"></div>
     <h1>MOTU Digital Signage</h1>
+    <div id="clock"></div>
   </header>
 
   <main id="container">
-    <!-- PANEL A -->
+    <!-- PANEL A : VIDEO -->
     <section id="panelA">
       <video
         id="panelAVideo"
@@ -26,15 +25,10 @@
       </video>
     </section>
 
-    <!-- PANEL B -->
+    <!-- PANEL B : INFO COLUMN -->
     <section id="panelB">
 
-      <!-- TOP RIGHT TICKER -->
-      <div id="sideTicker">
-        <span id="tickerText">Loading...</span>
-      </div>
-
-      <!-- WEATHER -->
+      <!-- WEATHER WIDGET (REPLACES NEWS) -->
       <div id="weatherWidgetBox">
         <iframe
           src="https://api.wo-cloud.com/content/widget/?geoObjectKey=42748473&language=en&region=US&timeFormat=HH:mm&windUnit=mph&systemOfMeasurement=imperial&temperatureUnit=fahrenheit"
@@ -42,9 +36,6 @@
           frameborder="0">
         </iframe>
       </div>
-
-      <!-- DIVIDER -->
-      <div class="divider"></div>
 
       <!-- CALENDAR -->
       <div id="calendarBox">
@@ -54,6 +45,10 @@
 
     </section>
   </main>
+
+  <footer id="ticker">
+    <span id="tickerText">Loading...</span>
+  </footer>
 
   <!-- JS -->
   <script src="./js/clock.js"></script>
