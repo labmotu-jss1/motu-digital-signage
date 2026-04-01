@@ -175,6 +175,10 @@ const state = {
   activeIndex: 0,
   fanOpen: true,
   interactionMode: "fan",
+  cubeRotationX: -18,
+  cubeRotationY: 24,
+  cubePointer: null,
+  cubeResumeTimer: null,
   pointer: null,
   suppressCardClickUntil: 0,
   lastGesture: "Waiting",
@@ -193,8 +197,13 @@ void init();
 fanButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   playUiSound("select");
-  state.fanOpen = !state.fanOpen;
-  state.interactionMode = state.fanOpen ? "fan" : "carousel";
+  if (state.interactionMode === "fan") {
+    state.interactionMode = "carousel";
+    state.fanOpen = false;
+  } else {
+    state.interactionMode = "fan";
+    state.fanOpen = true;
+  }
   renderModes();
   renderStage();
 });
@@ -277,15 +286,47 @@ document.addEventListener("fullscreenchange", () => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (!state.zoomOpen) return;
   if (event.key === "Escape") {
-    closeZoomView();
-  } else if (event.key === "+" || event.key === "=") {
+    if (state.zoomOpen) {
+      closeZoomView();
+      return;
+    }
+    if (getActiveCatalog() && state.interactionMode !== "cube") {
+      stopDemo();
+      state.interactionMode = "cube";
+      state.lastGesture = "Returned to cube";
+      renderModes();
+      renderStage();
+    }
+    return;
+  }
+
+  if (!state.zoomOpen) return;
+  if (event.key === "+" || event.key === "=") {
     adjustZoom(0.25);
   } else if (event.key === "-") {
     adjustZoom(-0.25);
   }
 });
+
+function resetCubeMotion() {
+  state.cubeRotationX = -18;
+  state.cubeRotationY = 24;
+  if (state.cubeResumeTimer) {
+    clearTimeout(state.cubeResumeTimer);
+    state.cubeResumeTimer = null;
+  }
+}
+
+function queueCubeAutoSpin(scene) {
+  if (state.cubeResumeTimer) {
+    clearTimeout(state.cubeResumeTimer);
+  }
+  state.cubeResumeTimer = setTimeout(() => {
+    scene.classList.remove("manual");
+    state.cubeResumeTimer = null;
+  }, 1400);
+}
 
 document.addEventListener("pointerdown", unlockAudio, { passive: true });
 
@@ -428,8 +469,8 @@ function renderModes() {
   const catalog = getActiveCatalog();
   const modes = [
     { id: "fan", label: "Fan" },
-    { id: "carousel", label: "Carousel" },
-    { id: "binder", label: "Binder" }
+    { id: "carousel", label: "Spin" },
+    { id: "cube", label: "Cube" }
   ];
 
   modePills.innerHTML = modes.map((mode) => `
@@ -458,10 +499,7 @@ function renderModes() {
 }
 
 function canUseMode(catalog, mode) {
-  if (catalog.mode === "binder") {
-    return mode === "binder" || mode === "fan";
-  }
-  return mode !== "binder";
+  return Boolean(catalog && mode);
 }
 
 function renderEmpty() {
@@ -469,8 +507,12 @@ function renderEmpty() {
   stackLayer.innerHTML = "";
   expandItemButton.disabled = true;
   openItemButton.disabled = true;
+  previousButton.disabled = true;
+  nextButton.disabled = true;
+  fanButton.disabled = true;
   demoButton.classList.remove("active-demo");
   demoButton.textContent = "Demo";
+  fanButton.textContent = "Fan";
   closeZoomView();
 }
 
@@ -484,6 +526,18 @@ function renderStage() {
   stageTitle.textContent = catalog.title;
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop" : "Demo";
+  fanButton.disabled = false;
+  previousButton.disabled = false;
+  nextButton.disabled = false;
+  fanButton.textContent = state.interactionMode === "fan" ? "Spin" : "Fan";
+
+  if (state.interactionMode === "cube") {
+    renderCubeStage(catalog);
+    expandItemButton.disabled = true;
+    openItemButton.disabled = true;
+    renderZoomView();
+    return;
+  }
 
   const items = buildOrderedItems(catalog);
   stackLayer.innerHTML = items.map((item) => renderCard(catalog, item)).join("");
@@ -506,6 +560,66 @@ function renderStage() {
   expandItemButton.disabled = false;
   openItemButton.disabled = false;
   renderZoomView();
+}
+
+function renderCubeStage(catalog) {
+  const faces = Array.from({ length: 6 }, (_, faceIndex) => {
+    const itemIndex = (state.activeIndex + faceIndex) % catalog.items.length;
+    const item = catalog.items[itemIndex];
+    return {
+      ...item,
+      index: itemIndex
+    };
+  });
+  const faceClasses = ["front", "right", "back", "left", "top", "bottom"];
+
+  stackLayer.innerHTML = `
+    <div class="cube-scene auto-spin" id="cubeScene">
+      <div
+        class="catalog-cube"
+        id="catalogCube"
+        style="transform: rotateX(${state.cubeRotationX}deg) rotateY(${state.cubeRotationY}deg);"
+      >
+        ${faces.map((item, faceIndex) => `
+          <article
+            class="cube-face ${faceClasses[faceIndex]} ${faceIndex === 0 ? "active" : ""}"
+            data-index="${item.index}"
+          >
+            <div class="cube-face-glow"></div>
+            ${renderPreview(catalog, item)}
+            <div class="cube-face-copy">
+              <h4>${item.title}</h4>
+              <p>${item.description}</p>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  const scene = document.getElementById("cubeScene");
+  const cube = document.getElementById("catalogCube");
+  attachCubeInteraction(scene, cube);
+
+  stackLayer.querySelectorAll(".cube-face").forEach((face) => {
+    face.addEventListener("click", () => openCubeFace(face.dataset.index));
+    face.addEventListener("pointerup", () => {
+      if (state.cubePointer?.moved) return;
+      openCubeFace(face.dataset.index);
+    });
+  });
+}
+
+function openCubeFace(index) {
+  if (Date.now() < state.suppressCardClickUntil) return;
+  stopDemo();
+  playUiSound("select");
+  state.activeIndex = Number(index) || 0;
+  state.interactionMode = "fan";
+  state.fanOpen = true;
+  state.lastGesture = "Cube face opened";
+  renderModes();
+  renderStage();
 }
 
 function buildOrderedItems(catalog) {
@@ -630,6 +744,53 @@ function renderPreview(catalog, item) {
       <div class="thumb-strip"><span></span><span></span><span></span></div>
     </div>
   `;
+}
+
+function attachCubeInteraction(scene, cube) {
+  scene.addEventListener("pointerdown", (event) => {
+    if (event.target.closest(".cube-face")) {
+      state.cubePointer = {
+        id: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startRotationX: state.cubeRotationX,
+        startRotationY: state.cubeRotationY,
+        moved: false
+      };
+      scene.classList.add("manual");
+      scene.setPointerCapture(event.pointerId);
+    }
+  });
+
+  scene.addEventListener("pointermove", (event) => {
+    if (!state.cubePointer || state.cubePointer.id !== event.pointerId) return;
+
+    const dx = event.clientX - state.cubePointer.startX;
+    const dy = event.clientY - state.cubePointer.startY;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+      state.cubePointer.moved = true;
+    }
+
+    state.cubeRotationY = state.cubePointer.startRotationY + (dx * 0.34);
+    state.cubeRotationX = state.cubePointer.startRotationX - (dy * 0.28);
+    cube.style.transform = `rotateX(${state.cubeRotationX}deg) rotateY(${state.cubeRotationY}deg)`;
+  });
+
+  scene.addEventListener("pointerup", (event) => {
+    if (!state.cubePointer || state.cubePointer.id !== event.pointerId) return;
+
+    if (state.cubePointer.moved) {
+      state.suppressCardClickUntil = Date.now() + 240;
+    }
+
+    state.cubePointer = null;
+    queueCubeAutoSpin(scene);
+  });
+
+  scene.addEventListener("pointercancel", () => {
+    state.cubePointer = null;
+    queueCubeAutoSpin(scene);
+  });
 }
 
 function attachGesture(card) {
@@ -813,6 +974,13 @@ function turnCatalog(direction) {
   const catalog = getActiveCatalog();
   if (!catalog) return;
 
+  if (state.interactionMode === "cube") {
+    state.activeIndex = (state.activeIndex + direction + catalog.items.length) % catalog.items.length;
+    state.lastGesture = direction > 0 ? "Cube next face" : "Cube previous face";
+    renderStage();
+    return;
+  }
+
   state.pendingBinderTurn = catalog.mode === "binder"
     ? direction > 0 ? "turn-forward" : "turn-back"
     : null;
@@ -839,7 +1007,8 @@ function activateCatalog(catalogId, gestureLabel) {
   state.activeCatalogId = catalogId;
   state.activeIndex = 0;
   state.fanOpen = true;
-  state.interactionMode = getActiveCatalog().mode === "binder" ? "binder" : "fan";
+  resetCubeMotion();
+  state.interactionMode = "fan";
   state.lastGesture = gestureLabel;
   renderDock();
   renderModes();
@@ -859,6 +1028,11 @@ function startDemo() {
   state.demoTimer = setInterval(() => {
     const active = getActiveCatalog();
     if (!active) return;
+
+    if (state.interactionMode === "cube") {
+      turnCatalog(1);
+      return;
+    }
 
     if (active.mode === "binder") {
       turnCatalog(1);
