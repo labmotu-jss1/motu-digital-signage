@@ -755,7 +755,7 @@ function attachCubeInteraction(scene, cube) {
       startRotationX: state.cubeRotationX,
       startRotationY: state.cubeRotationY,
       moved: false,
-      faceIndex: event.target.closest(".cube-face")?.dataset.index || null
+      startFaceIndex: getCubeFaceIndexAtPoint(event.clientX, event.clientY)
     };
     scene.classList.add("manual");
     scene.setPointerCapture(event.pointerId);
@@ -778,13 +778,13 @@ function attachCubeInteraction(scene, cube) {
   scene.addEventListener("pointerup", (event) => {
     if (!state.cubePointer || state.cubePointer.id !== event.pointerId) return;
 
-    const releasedFaceIndex = event.target.closest(".cube-face")?.dataset.index || null;
+    const releasedFaceIndex = getCubeFaceIndexAtPoint(event.clientX, event.clientY);
     if (state.cubePointer.moved) {
       state.suppressCardClickUntil = Date.now() + 240;
     } else if (
-      state.cubePointer.faceIndex &&
+      state.cubePointer.startFaceIndex &&
       releasedFaceIndex &&
-      state.cubePointer.faceIndex === releasedFaceIndex
+      state.cubePointer.startFaceIndex === releasedFaceIndex
     ) {
       openCubeFace(releasedFaceIndex);
     }
@@ -797,6 +797,12 @@ function attachCubeInteraction(scene, cube) {
     state.cubePointer = null;
     queueCubeAutoSpin(scene);
   });
+}
+
+function getCubeFaceIndexAtPoint(clientX, clientY) {
+  const elements = document.elementsFromPoint(clientX, clientY);
+  const face = elements.find((element) => element.classList?.contains("cube-face"));
+  return face?.dataset.index || null;
 }
 
 function attachGesture(card) {
