@@ -820,6 +820,7 @@ function renderPreview(catalog, item) {
       <div class="preview-shell video">
         <div class="asset-badge">Video</div>
         <div class="asset-icon video-icon"></div>
+        <div class="asset-title">${item.title}</div>
       </div>
     `;
   }
@@ -829,6 +830,7 @@ function renderPreview(catalog, item) {
       <div class="preview-shell audio">
         <div class="asset-badge">Audio</div>
         <div class="asset-wave"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="asset-title">${item.title}</div>
       </div>
     `;
   }
@@ -838,6 +840,7 @@ function renderPreview(catalog, item) {
       <div class="preview-shell text">
         <div class="asset-badge">Text</div>
         <div class="text-lines"><span></span><span></span><span></span><span></span></div>
+        <div class="asset-title">${item.title}</div>
       </div>
     `;
   }
@@ -847,6 +850,7 @@ function renderPreview(catalog, item) {
       <div class="preview-shell pdf">
         <div class="asset-badge">PDF</div>
         <div class="pdf-sheet"></div>
+        <div class="asset-title">${item.title}</div>
       </div>
     `;
   }

@@ -292,7 +292,7 @@ body::before {
 }
 
 .stage.expanded-mode {
-  min-height: calc(100vh - 160px);
+  min-height: calc(100vh - 110px);
 }
 
 .stack-layer {
@@ -436,7 +436,7 @@ body::before {
 
 .expanded-stage-card {
   width: min(1400px, calc(100vw - 48px));
-  height: min(calc(100vh - 190px), 980px);
+  height: min(calc(100vh - 125px), 1100px);
   display: grid;
   place-items: center;
   padding: 0;
@@ -624,6 +624,21 @@ body::before {
     linear-gradient(145deg, rgba(103, 239, 255, 0.12), rgba(255, 255, 255, 0.02)),
     rgba(7, 18, 31, 0.94);
   color: var(--text);
+}
+
+.asset-title {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #f4f8fc;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .asset-badge {
