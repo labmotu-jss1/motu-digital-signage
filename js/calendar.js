@@ -12,6 +12,8 @@
   const REFRESH_INTERVAL_MS = 120000;
   const SCROLL_INTERVAL_MS = 34;
   const SCROLL_PAUSE_MS = 2200;
+  const UPCOMING_LIMIT = 10;
+  const HORIZON_DAYS = 90;
 
   let scrollTimer = null;
 
@@ -29,10 +31,10 @@
       if (!res.ok) throw new Error("Calendar request failed");
 
       const text = await res.text();
-      const events = parseICS(text)
+      const events = expandEvents(parseICS(text), new Date())
         .filter(event => event.start && event.start.getTime() >= Date.now() - 86400000)
         .sort((a, b) => a.start - b.start)
-        .slice(0, 10);
+        .slice(0, UPCOMING_LIMIT);
 
       if (count) {
         count.textContent = `${events.length} Loaded`;
@@ -111,7 +113,7 @@
   }
 
   function parseICS(text) {
-    const lines = text.split(/\r?\n/);
+    const lines = unfoldICS(text).split(/\r?\n/);
     const events = [];
     let current = {};
 
@@ -123,31 +125,63 @@
       }
 
       if (line.startsWith("DTSTART")) {
-        const raw = line.split(":")[1];
-        current.start = parseICSDate(raw);
+        current.start = parseICSProperty(line);
+      }
+
+      if (line.startsWith("DTEND")) {
+        current.end = parseICSProperty(line);
+      }
+
+      if (line.startsWith("RECURRENCE-ID")) {
+        current.recurrenceId = parseICSProperty(line);
+      }
+
+      if (line.startsWith("RRULE:")) {
+        current.rrule = parseRRule(line.slice(6).trim());
+      }
+
+      if (line.startsWith("EXDATE")) {
+        current.exdates = current.exdates || [];
+        current.exdates.push(...parseICSPropertyList(line));
+      }
+
+      if (line.startsWith("UID:")) {
+        current.uid = line.slice(4).trim();
       }
 
       if (line === "END:VEVENT") {
-        const start = current.start;
-        events.push({
-          title: current.title || "(No title)",
-          start,
-          dateLabel: start ? start.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric"
-          }) : "TBD",
-          dayLabel: start ? start.toLocaleDateString("en-US", {
-            weekday: "short"
-          }) : "TBD",
-          timeLabel: start ? start.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit"
-          }) : "All day"
-        });
+        if (current.start && current.title) {
+          events.push({
+            title: current.title,
+            start: current.start,
+            end: current.end || null,
+            uid: current.uid || "",
+            recurrenceId: current.recurrenceId || null,
+            rrule: current.rrule || null,
+            exdates: current.exdates || []
+          });
+        }
       }
     }
 
     return events;
+  }
+
+  function unfoldICS(text) {
+    return text.replace(/\r?\n[ \t]/g, "");
+  }
+
+  function parseICSProperty(line) {
+    const raw = line.split(":").slice(1).join(":");
+    return parseICSDate(raw.trim());
+  }
+
+  function parseICSPropertyList(line) {
+    const raw = line.split(":").slice(1).join(":");
+    return raw
+      .split(",")
+      .map(value => parseICSDate(value.trim()))
+      .filter(Boolean);
   }
 
   function parseICSDate(raw) {
@@ -176,6 +210,123 @@
     }
 
     return null;
+  }
+
+  function parseRRule(raw) {
+    const rule = {};
+
+    for (const part of raw.split(";")) {
+      const [key, value] = part.split("=");
+      if (key && value) {
+        rule[key] = value;
+      }
+    }
+
+    return rule;
+  }
+
+  function expandEvents(parsedEvents, now) {
+    const horizon = new Date(now.getTime() + HORIZON_DAYS * 86400000);
+    const overrides = new Map();
+    const results = [];
+
+    for (const event of parsedEvents) {
+      if (event.recurrenceId && event.uid) {
+        overrides.set(makeOccurrenceKey(event.uid, event.recurrenceId), event);
+      }
+    }
+
+    for (const event of parsedEvents) {
+      if (event.recurrenceId) continue;
+
+      if (!event.rrule) {
+        results.push(formatEvent(event));
+        continue;
+      }
+
+      results.push(...expandRecurringEvent(event, overrides, now, horizon));
+    }
+
+    return results;
+  }
+
+  function expandRecurringEvent(event, overrides, now, horizon) {
+    const rule = event.rrule || {};
+    const interval = Math.max(1, Number(rule.INTERVAL || 1));
+    const count = Number(rule.COUNT || 0);
+    const until = rule.UNTIL ? parseICSDate(rule.UNTIL) : null;
+    const frequency = rule.FREQ;
+    const results = [];
+    let cursor = new Date(event.start.getTime());
+    let produced = 0;
+    let seen = 0;
+    const maxIterations = 2000;
+
+    while (seen < maxIterations) {
+      if (count && seen >= count) break;
+      if (until && cursor > until) break;
+      if (cursor > horizon && produced >= UPCOMING_LIMIT) break;
+
+      const occurrenceKey = makeOccurrenceKey(event.uid, cursor);
+      const excluded = (event.exdates || []).some(exdate => sameInstant(exdate, cursor));
+
+      if (!excluded) {
+        const override = overrides.get(occurrenceKey);
+        const candidate = override || {
+          ...event,
+          start: new Date(cursor.getTime()),
+          end: event.end ? new Date(cursor.getTime() + (event.end.getTime() - event.start.getTime())) : null
+        };
+
+        if (candidate.start >= new Date(now.getTime() - 86400000)) {
+          results.push(formatEvent(candidate));
+          produced += 1;
+        }
+      }
+
+      seen += 1;
+
+      if (frequency === "DAILY") {
+        cursor.setDate(cursor.getDate() + interval);
+      } else if (frequency === "WEEKLY") {
+        cursor.setDate(cursor.getDate() + (7 * interval));
+      } else {
+        break;
+      }
+
+      if (produced >= UPCOMING_LIMIT && cursor > now) {
+        break;
+      }
+    }
+
+    return results;
+  }
+
+  function formatEvent(event) {
+    const start = event.start;
+
+    return {
+      ...event,
+      dateLabel: start ? start.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+      }) : "TBD",
+      dayLabel: start ? start.toLocaleDateString("en-US", {
+        weekday: "short"
+      }) : "TBD",
+      timeLabel: start ? start.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit"
+      }) : "All day"
+    };
+  }
+
+  function makeOccurrenceKey(uid, date) {
+    return `${uid}::${date.toISOString()}`;
+  }
+
+  function sameInstant(a, b) {
+    return a && b && a.getTime() === b.getTime();
   }
 
   function escapeHtml(value) {
