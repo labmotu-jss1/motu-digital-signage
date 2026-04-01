@@ -680,20 +680,9 @@ function renderExpandedStage(catalog) {
     return;
   }
 
-  if (activeItem.assetUrl) {
-    stackLayer.innerHTML = `
-      <article class="expanded-stage-card">
-        <div class="expanded-stage-media">
-          <img src="${activeItem.assetUrl}" alt="${activeItem.title}" class="expanded-stage-image" />
-        </div>
-      </article>
-    `;
-    return;
-  }
-
   stackLayer.innerHTML = `
-    <article class="expanded-stage-card fallback">
-      ${renderPreview(catalog, activeItem)}
+    <article class="expanded-stage-card ${activeItem.assetUrl ? "" : "fallback"}">
+      ${renderExpandedAsset(activeItem)}
     </article>
   `;
 }
@@ -715,8 +704,19 @@ function renderCubeFacePreview(catalog, item) {
 }
 
 function getCubeFaceStyle(item) {
-  if (!item.assetUrl) return "";
+  if (!item.assetUrl || getAssetType(item) !== "image") return "";
   return `background-image: linear-gradient(145deg, rgba(97, 231, 255, 0.1), rgba(4, 12, 22, 0.08)), url('${item.assetUrl}'); background-size: cover; background-position: center;`;
+}
+
+function getAssetType(item) {
+  if (item.assetType) return item.assetType;
+  const source = (item.extension || item.assetUrl || "").toLowerCase();
+  if (/\.(png|jpg|jpeg|webp|gif|bmp)$/.test(source)) return "image";
+  if (/\.(mp4|mov|m4v|webm)$/.test(source)) return "video";
+  if (/\.(mp3|wav|m4a|aac|ogg)$/.test(source)) return "audio";
+  if (/\.(txt|log|md)$/.test(source)) return "text";
+  if (/\.pdf$/.test(source)) return "pdf";
+  return "file";
 }
 
 function buildOrderedItems(catalog) {
@@ -804,10 +804,46 @@ function computeLayout(catalog, relative) {
 }
 
 function renderPreview(catalog, item) {
-  if (item.assetUrl) {
+  if (item.assetUrl && getAssetType(item) === "image") {
     return `
       <div class="preview-shell asset">
         <img src="${item.assetUrl}" alt="${item.title}" loading="lazy" />
+      </div>
+    `;
+  }
+
+  if (item.assetUrl && getAssetType(item) === "video") {
+    return `
+      <div class="preview-shell video">
+        <div class="asset-badge">Video</div>
+        <div class="asset-icon video-icon"></div>
+      </div>
+    `;
+  }
+
+  if (item.assetUrl && getAssetType(item) === "audio") {
+    return `
+      <div class="preview-shell audio">
+        <div class="asset-badge">Audio</div>
+        <div class="asset-wave"><span></span><span></span><span></span><span></span><span></span></div>
+      </div>
+    `;
+  }
+
+  if (item.assetUrl && getAssetType(item) === "text") {
+    return `
+      <div class="preview-shell text">
+        <div class="asset-badge">Text</div>
+        <div class="text-lines"><span></span><span></span><span></span><span></span></div>
+      </div>
+    `;
+  }
+
+  if (item.assetUrl && getAssetType(item) === "pdf") {
+    return `
+      <div class="preview-shell pdf">
+        <div class="asset-badge">PDF</div>
+        <div class="pdf-sheet"></div>
       </div>
     `;
   }
@@ -853,6 +889,46 @@ function renderPreview(catalog, item) {
       <div class="thumb-strip"><span></span><span></span><span></span></div>
     </div>
   `;
+}
+
+function renderExpandedAsset(item) {
+  if (!item.assetUrl) {
+    return renderPreview(null, item);
+  }
+
+  switch (getAssetType(item)) {
+    case "image":
+      return `
+        <div class="expanded-stage-media">
+          <img src="${item.assetUrl}" alt="${item.title}" class="expanded-stage-image" />
+        </div>
+      `;
+    case "video":
+      return `
+        <div class="expanded-stage-media">
+          <video class="expanded-stage-video" src="${item.assetUrl}" controls playsinline preload="metadata"></video>
+        </div>
+      `;
+    case "audio":
+      return `
+        <div class="expanded-stage-media audio-stage">
+          <div class="audio-stage-card">
+            <h4>${item.title}</h4>
+            <audio class="expanded-stage-audio" src="${item.assetUrl}" controls preload="metadata"></audio>
+          </div>
+        </div>
+      `;
+    case "text":
+    case "pdf":
+    case "file":
+      return `
+        <div class="expanded-stage-media">
+          <iframe class="expanded-stage-frame" src="${item.assetUrl}" title="${item.title}"></iframe>
+        </div>
+      `;
+    default:
+      return renderPreview(null, item);
+  }
 }
 
 function attachCubeInteraction(scene, cube) {

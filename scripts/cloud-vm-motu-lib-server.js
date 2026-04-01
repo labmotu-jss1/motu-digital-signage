@@ -18,6 +18,18 @@ const mimeTypes = {
   ".webp": "image/webp",
   ".gif": "image/gif",
   ".bmp": "image/bmp",
+  ".mp4": "video/mp4",
+  ".mov": "video/quicktime",
+  ".m4v": "video/x-m4v",
+  ".webm": "video/webm",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".m4a": "audio/mp4",
+  ".aac": "audio/aac",
+  ".ogg": "audio/ogg",
+  ".txt": "text/plain; charset=utf-8",
+  ".log": "text/plain; charset=utf-8",
+  ".md": "text/markdown; charset=utf-8",
   ".pdf": "application/pdf",
   ".json": "application/json; charset=utf-8"
 };
@@ -62,6 +74,33 @@ function formatItemTitle(fileName) {
 function classifyCatalog(folderName) {
   const lowered = folderName.toLowerCase();
 
+  if (lowered.includes("event") || lowered.includes("log")) {
+    return {
+      mode: "binder",
+      badge: "Logs",
+      preview: "text",
+      description: "Review plain-text logs and event traces live from the VM library."
+    };
+  }
+
+  if (lowered.includes("sound") || lowered.includes("audio") || lowered.includes("record")) {
+    return {
+      mode: "carousel",
+      badge: "Audio",
+      preview: "audio",
+      description: "Browse and play audio captures live from the VM library."
+    };
+  }
+
+  if (lowered.includes("video") || lowered.includes("youcam")) {
+    return {
+      mode: "carousel",
+      badge: "Video",
+      preview: "video",
+      description: "Browse and play video clips live from the VM library."
+    };
+  }
+
   if (lowered.includes("document") || lowered.includes("terminal")) {
     return {
       mode: "binder",
@@ -88,6 +127,15 @@ function classifyCatalog(folderName) {
   };
 }
 
+function getAssetType(ext) {
+  if ([".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"].includes(ext)) return "image";
+  if ([".mp4", ".mov", ".m4v", ".webm"].includes(ext)) return "video";
+  if ([".mp3", ".wav", ".m4a", ".aac", ".ogg"].includes(ext)) return "audio";
+  if ([".txt", ".log", ".md"].includes(ext)) return "text";
+  if (ext === ".pdf") return "pdf";
+  return "file";
+}
+
 function addCorsHeaders(res) {
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
   res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
@@ -105,7 +153,12 @@ function safeJoin(root, relativePath) {
 }
 
 function listCatalogs() {
-  const allowedExts = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".pdf"]);
+  const allowedExts = new Set([
+    ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".pdf",
+    ".mp4", ".mov", ".m4v", ".webm",
+    ".mp3", ".wav", ".m4a", ".aac", ".ogg",
+    ".txt", ".log", ".md"
+  ]);
   const entries = fs.readdirSync(libraryRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -126,6 +179,7 @@ function listCatalogs() {
 
     const items = files.map((file, fileIndex) => {
       const stats = fs.statSync(file.fullPath);
+      const assetType = getAssetType(file.ext);
       return {
         title: formatItemTitle(file.name),
         description: `${formatCatalogTitle(folderName)} item ${fileIndex + 1} served live from ${folderPath}.`,
@@ -135,6 +189,8 @@ function listCatalogs() {
           "Live VM"
         ],
         preview: kind.preview,
+        assetType,
+        extension: file.ext,
         assetUrl: `https://40-160-254-60.sslip.io/motu-lib/assets/${encodeURIComponent(folderName)}/${encodeURIComponent(file.name)}`,
         sourcePath: file.fullPath
       };
