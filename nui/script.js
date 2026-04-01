@@ -1,4 +1,4 @@
-const catalogs = [
+const fallbackCatalogs = [
   {
     id: "media-gallery",
     title: "Media Gallery",
@@ -135,6 +135,8 @@ const catalogs = [
   }
 ];
 
+let catalogs = [];
+
 const dock = document.getElementById("dock");
 const stackLayer = document.getElementById("stackLayer");
 const stageTitle = document.getElementById("stageTitle");
@@ -175,10 +177,8 @@ const state = {
   demoRunning: false
 };
 
-catalogCount.textContent = `${catalogs.length} Catalogs`;
-renderDock();
-renderModes();
-activateCatalog("media-gallery", "Sample loaded");
+setLoadingState();
+void init();
 
 fanButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
@@ -203,7 +203,7 @@ resetButton.addEventListener("click", () => {
 openItemButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
-  focusCurrentItem();
+  openCurrentItem();
 });
 
 previousButton.addEventListener("click", () => {
@@ -247,6 +247,54 @@ document.addEventListener("fullscreenchange", () => {
 
 function getActiveCatalog() {
   return catalogs.find((catalog) => catalog.id === state.activeCatalogId) || null;
+}
+
+async function init() {
+  catalogs = await loadCatalogs();
+  catalogCount.textContent = `${catalogs.length} Catalogs`;
+  renderDock();
+  renderModes();
+
+  if (catalogs.length === 0) {
+    renderEmpty();
+    return;
+  }
+
+  activateCatalog(catalogs[0].id, catalogs === fallbackCatalogs ? "Sample loaded" : "Library synced");
+}
+
+async function loadCatalogs() {
+  try {
+    const response = await fetch("./data/catalogs.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Catalog request failed: ${response.status}`);
+    }
+
+    const payload = await response.json();
+    if (!Array.isArray(payload) || payload.length === 0) {
+      return fallbackCatalogs;
+    }
+
+    return payload;
+  } catch (error) {
+    console.warn("Falling back to bundled sample catalogs.", error);
+    return fallbackCatalogs;
+  }
+}
+
+function setLoadingState() {
+  catalogCount.textContent = "Loading";
+  stageTitle.textContent = "Loading catalog";
+  gestureHint.textContent = "Loading synced library content...";
+  detailTitle.textContent = "Loading";
+  detailDescription.textContent = "Checking for published library data and preparing the wall.";
+  detailMeta.innerHTML = "";
+  detailBadge.textContent = "Loading";
+  telemetryCatalog.textContent = "Loading";
+  telemetryIndex.textContent = "0 / 0";
+  telemetryGesture.textContent = "Boot";
+  telemetryMode.textContent = "Fan";
+  openItemButton.disabled = true;
 }
 
 function renderDock() {
@@ -345,7 +393,7 @@ function renderStage() {
   if (topCard) {
     topCard.addEventListener("click", () => {
       stopDemo();
-      focusCurrentItem();
+      openCurrentItem();
     });
     attachGesture(topCard);
   }
@@ -368,7 +416,8 @@ function buildOrderedItems(catalog) {
       index,
       relative: (index - state.activeIndex + catalog.items.length) % catalog.items.length
     }))
-    .sort((a, b) => a.relative - b.relative);
+    .sort((a, b) => a.relative - b.relative)
+    .slice(0, Math.min(catalog.items.length, 9));
 }
 
 function renderCard(catalog, item) {
@@ -433,6 +482,14 @@ function computeLayout(catalog, relative) {
 }
 
 function renderPreview(catalog, item) {
+  if (item.assetUrl) {
+    return `
+      <div class="preview-shell asset">
+        <img src="${item.assetUrl}" alt="${item.title}" loading="lazy" />
+      </div>
+    `;
+  }
+
   if (item.preview === "folder") {
     const tree = item.tree || ["Root", "Folder", "Current"];
     return `
@@ -560,6 +617,21 @@ function focusCurrentItem() {
   void topCard.offsetWidth;
   topCard.classList.add("focus-pop");
   topCard.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+function openCurrentItem() {
+  const catalog = getActiveCatalog();
+  if (!catalog) return;
+
+  const activeItem = catalog.items[state.activeIndex];
+  if (activeItem?.assetUrl) {
+    state.lastGesture = "Opened asset";
+    renderStage();
+    window.open(activeItem.assetUrl, "_blank", "noopener");
+    return;
+  }
+
+  focusCurrentItem();
 }
 
 function turnCatalog(direction) {

@@ -449,6 +449,19 @@ body::before {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.preview-shell.asset {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(7, 18, 31, 0.94);
+}
+
+.preview-shell.asset img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 .preview-shell.folder {
   background:
     linear-gradient(160deg, rgba(175, 255, 155, 0.18), rgba(175, 255, 155, 0.04)),
