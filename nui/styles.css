@@ -252,9 +252,11 @@ body::before {
     var(--panel-strong);
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-  flex: 0 0 auto;
-  width: fit-content;
-  max-width: min(100%, 420px);
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  width: auto;
+  max-width: max-content;
   min-height: 0;
 }
 
@@ -281,6 +283,7 @@ body::before {
   font-size: 1rem;
   line-height: 1.22;
   white-space: nowrap;
+  display: inline-block;
 }
 
 .stage {
