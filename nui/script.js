@@ -211,14 +211,13 @@ fanButton.addEventListener("click", () => {
 resetButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   playUiSound("return");
-  state.activeCatalogId = null;
+  resetCubeMotion();
   state.activeIndex = 0;
   state.fanOpen = true;
-  state.interactionMode = "fan";
-  state.lastGesture = "Returned";
-  renderDock();
+  state.interactionMode = "cube";
+  state.lastGesture = "Returned to cube";
   renderModes();
-  renderEmpty();
+  renderStage();
 });
 
 expandItemButton.addEventListener("click", () => {
@@ -654,13 +653,13 @@ function renderCard(catalog, item) {
 function computeLayout(catalog, relative) {
   if (state.interactionMode === "carousel") {
     const slot = Math.min(relative, 5);
-    const xMap = [-220, -120, -15, 110, 220, 305];
-    const yMap = [36, 12, 0, 18, 48, 84];
-    const rotateMap = [-18, -10, -3, 7, 15, 22];
-    const scaleMap = [0.74, 0.84, 1, 0.9, 0.8, 0.68];
+    const xMap = [-300, -180, -48, 102, 246, 372];
+    const yMap = [112, 46, 0, 24, 86, 156];
+    const rotateMap = [-28, -17, -5, 9, 20, 30];
+    const scaleMap = [0.62, 0.76, 1.08, 0.92, 0.72, 0.52];
     return {
       transform: `translateX(${xMap[slot]}px) translateY(${yMap[slot]}px) rotate(${rotateMap[slot]}deg) scale(${scaleMap[slot]})`,
-      opacity: [0.52, 0.74, 1, 0.86, 0.66, 0.42][slot],
+      opacity: [0.24, 0.52, 1, 0.82, 0.5, 0.22][slot],
       zIndex: 100 - slot
     };
   }
@@ -781,6 +780,8 @@ function attachCubeInteraction(scene, cube) {
       state.cubePointer.startFaceIndex === releasedFaceIndex
     ) {
       openCubeFace(releasedFaceIndex);
+    } else {
+      openCubeFace(state.activeIndex);
     }
 
     state.cubePointer = null;
@@ -797,6 +798,17 @@ function getCubeFaceIndexAtPoint(clientX, clientY) {
   const elements = document.elementsFromPoint(clientX, clientY);
   const face = elements.find((element) => element.classList?.contains("cube-face"));
   return face?.dataset.index || null;
+}
+
+function returnToWall() {
+  state.activeCatalogId = null;
+  state.activeIndex = 0;
+  state.fanOpen = true;
+  state.interactionMode = "cube";
+  state.lastGesture = "Returned";
+  renderDock();
+  renderModes();
+  renderEmpty();
 }
 
 function attachGesture(card) {
@@ -853,13 +865,7 @@ function attachGesture(card) {
 
     if (flingUp) {
       state.lastGesture = "Returned to wall";
-      state.activeCatalogId = null;
-      state.activeIndex = 0;
-      state.fanOpen = true;
-      state.interactionMode = "fan";
-      renderDock();
-      renderModes();
-      renderEmpty();
+      returnToWall();
       state.pointer = null;
       return;
     }
@@ -1014,7 +1020,7 @@ function activateCatalog(catalogId, gestureLabel) {
   state.activeIndex = 0;
   state.fanOpen = true;
   resetCubeMotion();
-  state.interactionMode = "fan";
+  state.interactionMode = "cube";
   state.lastGesture = gestureLabel;
   renderDock();
   renderModes();
