@@ -162,14 +162,14 @@ body::before {
 .hero-band h2 {
   margin-top: 8px;
   max-width: 15ch;
-  font-size: clamp(2.3rem, 4.2vw, 4.8rem);
+  font-size: clamp(1.6rem, 2.8vw, 3rem);
   line-height: 0.92;
 }
 
 .hero-band p {
   max-width: 48rem;
   color: #d1e0ed;
-  line-height: 1.65;
+  line-height: 1.55;
 }
 
 .gesture-strip {
@@ -629,7 +629,136 @@ body::before {
     grid-template-columns: 1fr;
   }
 
+  .hero-band h2 {
+    max-width: 20ch;
+    font-size: clamp(1.5rem, 4vw, 2.4rem);
+  }
+
+  .hero-band {
+    padding: 18px;
+    gap: 14px;
+  }
+
+  .gesture-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .main-grid {
+    grid-template-areas:
+      "stage"
+      "dock"
+      "detail";
+  }
+
+  .stage-panel {
+    grid-area: stage;
+  }
+
+  .dock-panel {
+    grid-area: dock;
+  }
+
+  .detail-panel {
+    grid-area: detail;
+  }
+
+  .dock-list {
+    grid-template-columns: repeat(4, minmax(260px, 1fr));
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px;
+  }
+
+  .dock-card {
+    min-height: 180px;
+  }
+
   .stack-card {
     width: min(88vw, 460px);
+  }
+}
+
+@media (max-width: 900px) {
+  .wall-app {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .topbar,
+  .hero-band,
+  .dock-panel,
+  .stage-panel,
+  .detail-panel {
+    border-radius: 22px;
+  }
+
+  .topbar {
+    padding: 14px 16px;
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .topbar h1 {
+    font-size: clamp(1.7rem, 7vw, 2.4rem);
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .mode-pills {
+    flex: 1;
+  }
+
+  .mode-pill,
+  .control-button,
+  .panel-pill,
+  .detail-chip {
+    font-size: 0.92rem;
+  }
+
+  .hero-band h2 {
+    font-size: clamp(1.35rem, 5vw, 2rem);
+    line-height: 1;
+  }
+
+  .hero-band p {
+    font-size: 0.95rem;
+  }
+
+  .gesture-card {
+    min-height: 92px;
+    padding: 14px;
+  }
+
+  .stage-actions {
+    width: 100%;
+  }
+
+  .stage-actions .control-button {
+    flex: 1 1 140px;
+  }
+
+  .dock-list {
+    grid-template-columns: repeat(4, 240px);
+  }
+
+  .stage {
+    min-height: 560px;
+  }
+
+  .stack-card {
+    width: min(92vw, 380px);
+    min-height: 360px;
+    padding: 16px;
+  }
+
+  .preview-shell {
+    height: 180px;
+  }
+
+  .detail-panel {
+    padding-bottom: 24px;
   }
 }
