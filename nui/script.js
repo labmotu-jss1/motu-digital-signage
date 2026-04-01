@@ -461,12 +461,7 @@ function setLoadingState() {
 function renderDock() {
   dock.innerHTML = catalogs.map((catalog) => `
     <article class="dock-card ${state.activeCatalogId === catalog.id ? "active" : ""}" data-catalog-id="${catalog.id}">
-      <div class="dock-row">
-        <span class="dock-count">${catalog.items.length} items</span>
-        <span class="dock-mode">${catalog.badge}</span>
-      </div>
       <h4>${catalog.title}</h4>
-      <p>${catalog.description}</p>
     </article>
   `).join("");
 

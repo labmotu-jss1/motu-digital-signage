@@ -84,12 +84,28 @@ body::before {
   z-index: 80;
   padding: 8px 10px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
   border-radius: 0;
   border-left: 0;
   border-right: 0;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.topbar-brand h1 {
+  margin: 0;
+  font-family: "Syne", sans-serif;
+  font-size: 1.18rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .panel-head h3,
@@ -227,7 +243,7 @@ body::before {
 .dock-card {
   position: relative;
   overflow: hidden;
-  padding: 18px;
+  padding: 16px 14px;
   border-radius: 24px;
   border: 1px solid var(--line);
   background:
@@ -256,33 +272,9 @@ body::before {
 }
 
 .dock-card h4 {
-  margin-top: 10px;
-  font-size: 1.34rem;
-}
-
-.dock-card p {
-  margin: 10px 0 0;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.dock-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.dock-count,
-.dock-mode {
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 0.8rem;
-}
-
-.dock-mode {
-  color: #d8fbff;
+  margin-top: 0;
+  font-size: 1.08rem;
+  line-height: 1.22;
 }
 
 .stage {
@@ -861,8 +853,13 @@ body::before {
     border-radius: 0;
   }
 
-  .topbar h1 {
-    font-size: clamp(1.7rem, 7vw, 2.4rem);
+  .topbar-brand {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topbar-brand h1 {
+    font-size: clamp(1rem, 4.4vw, 1.2rem);
   }
 
   .topbar-actions {
