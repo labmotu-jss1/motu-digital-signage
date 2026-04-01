@@ -46,10 +46,10 @@ body::before {
 
 .wall-app {
   min-height: 100vh;
-  padding: 68px 14px 14px;
+  padding: 58px 10px 10px;
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 10px;
+  gap: 6px;
 }
 
 .topbar,
@@ -82,7 +82,7 @@ body::before {
   left: 0;
   right: 0;
   z-index: 80;
-  padding: 10px 12px;
+  padding: 8px 10px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -160,13 +160,13 @@ body::before {
   grid-template-areas:
     "stage"
     "dock";
-  gap: 10px;
+  gap: 6px;
   min-height: 0;
 }
 
 .dock-panel,
 .stage-panel {
-  padding: 12px;
+  padding: 8px;
   min-height: 0;
 }
 
@@ -174,7 +174,7 @@ body::before {
   grid-area: stage;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: 4px;
+  gap: 2px;
 }
 
 .dock-panel {
@@ -186,7 +186,7 @@ body::before {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .stage-banner {
@@ -440,7 +440,7 @@ body::before {
   height: min(80vh, 860px);
   display: grid;
   place-items: center;
-  padding: 10px;
+  padding: 4px;
   border-radius: 34px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -841,8 +841,8 @@ body::before {
 
 @media (max-width: 900px) {
   .wall-app {
-    padding: 72px 12px 12px;
-    gap: 10px;
+    padding: 62px 8px 8px;
+    gap: 6px;
   }
 
   .topbar,
