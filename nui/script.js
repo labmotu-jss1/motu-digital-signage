@@ -154,6 +154,9 @@ const openItemButton = document.getElementById("openItemButton");
 const zoomOverlay = document.getElementById("zoomOverlay");
 const zoomTitle = document.getElementById("zoomTitle");
 const zoomImage = document.getElementById("zoomImage");
+const zoomPreviousButton = document.getElementById("zoomPreviousButton");
+const zoomHomeButton = document.getElementById("zoomHomeButton");
+const zoomNextButton = document.getElementById("zoomNextButton");
 const zoomInButton = document.getElementById("zoomInButton");
 const zoomOutButton = document.getElementById("zoomOutButton");
 const zoomCloseButton = document.getElementById("zoomCloseButton");
@@ -236,6 +239,9 @@ openItemButton.addEventListener("click", () => {
 
 zoomInButton.addEventListener("click", () => adjustZoom(0.25));
 zoomOutButton.addEventListener("click", () => adjustZoom(-0.25));
+zoomPreviousButton.addEventListener("click", () => stepZoomItem(-1));
+zoomNextButton.addEventListener("click", () => stepZoomItem(1));
+zoomHomeButton.addEventListener("click", goHomeFromZoom);
 zoomCloseButton.addEventListener("click", closeZoomView);
 zoomOverlay.addEventListener("click", (event) => {
   if (event.target === zoomOverlay || event.target.classList.contains("zoom-backdrop")) {
@@ -287,7 +293,7 @@ document.addEventListener("fullscreenchange", () => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     if (state.zoomOpen) {
-      closeZoomView();
+      goHomeFromZoom();
       return;
     }
     if (getActiveCatalog() && state.interactionMode !== "cube") {
@@ -301,10 +307,16 @@ document.addEventListener("keydown", (event) => {
   }
 
   if (!state.zoomOpen) return;
-  if (event.key === "+" || event.key === "=") {
+  if (event.key === "ArrowLeft") {
+    stepZoomItem(-1);
+  } else if (event.key === "ArrowRight") {
+    stepZoomItem(1);
+  } else if (event.key === "+" || event.key === "=") {
     adjustZoom(0.25);
   } else if (event.key === "-") {
     adjustZoom(-0.25);
+  } else if (event.key.toLowerCase() === "h") {
+    goHomeFromZoom();
   }
 });
 
@@ -971,6 +983,33 @@ function closeZoomView() {
   renderZoomView();
 }
 
+function stepZoomItem(direction) {
+  const catalog = getActiveCatalog();
+  if (!state.zoomOpen || !catalog) return;
+
+  const nextIndex = state.activeIndex + direction;
+  if (nextIndex < 0 || nextIndex >= catalog.items.length) return;
+
+  state.activeIndex = nextIndex;
+  state.zoomScale = 1;
+  state.lastGesture = direction > 0 ? "Zoom next" : "Zoom previous";
+  renderZoomView();
+  renderStage();
+}
+
+function goHomeFromZoom() {
+  closeZoomView();
+  if (!getActiveCatalog()) return;
+  stopDemo();
+  resetCubeMotion();
+  state.activeIndex = 0;
+  state.fanOpen = true;
+  state.interactionMode = "cube";
+  state.lastGesture = "Home from zoom";
+  renderModes();
+  renderStage();
+}
+
 function adjustZoom(delta) {
   if (!state.zoomOpen) return;
   state.zoomScale = Math.min(3, Math.max(1, state.zoomScale + delta));
@@ -994,6 +1033,8 @@ function renderZoomView() {
   zoomImage.src = activeItem.assetUrl;
   zoomImage.alt = activeItem.title;
   zoomImage.style.transform = `scale(${state.zoomScale})`;
+  zoomPreviousButton.disabled = state.activeIndex <= 0;
+  zoomNextButton.disabled = state.activeIndex >= getActiveCatalog().items.length - 1;
   zoomOutButton.disabled = state.zoomScale <= 1;
   zoomInButton.disabled = state.zoomScale >= 3;
 }
