@@ -165,6 +165,11 @@ const gestureConfig = {
   velocityThreshold: 0.55
 };
 
+const soundState = {
+  context: null,
+  unlocked: false
+};
+
 const state = {
   activeCatalogId: null,
   activeIndex: 0,
@@ -187,6 +192,7 @@ void init();
 
 fanButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
+  playUiSound("select");
   state.fanOpen = !state.fanOpen;
   state.interactionMode = state.fanOpen ? "fan" : "carousel";
   renderModes();
@@ -195,6 +201,7 @@ fanButton.addEventListener("click", () => {
 
 resetButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
+  playUiSound("return");
   state.activeCatalogId = null;
   state.activeIndex = 0;
   state.fanOpen = true;
@@ -208,12 +215,14 @@ resetButton.addEventListener("click", () => {
 expandItemButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
+  playUiSound("expand");
   openZoomView();
 });
 
 openItemButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
+  playUiSound("open");
   openCurrentItem();
 });
 
@@ -229,12 +238,14 @@ zoomOverlay.addEventListener("click", (event) => {
 previousButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
+  playUiSound("swipe");
   turnCatalog(-1);
 });
 
 nextButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
+  playUiSound("swipe");
   turnCatalog(1);
 });
 
@@ -275,6 +286,78 @@ document.addEventListener("keydown", (event) => {
     adjustZoom(-0.25);
   }
 });
+
+document.addEventListener("pointerdown", unlockAudio, { passive: true });
+
+function unlockAudio() {
+  if (soundState.unlocked) return;
+
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) return;
+
+  try {
+    soundState.context = soundState.context || new AudioContextCtor();
+    if (soundState.context.state === "suspended") {
+      void soundState.context.resume();
+    }
+    soundState.unlocked = true;
+  } catch (error) {
+    console.warn("Audio unlock failed.", error);
+  }
+}
+
+function playUiSound(kind) {
+  if (!soundState.unlocked || !soundState.context) return;
+
+  const context = soundState.context;
+  const now = context.currentTime;
+  const tones = {
+    select: [
+      { type: "triangle", start: 540, end: 760, duration: 0.07, gain: 0.05 },
+      { type: "sine", start: 760, end: 900, duration: 0.09, gain: 0.022, delay: 0.014 }
+    ],
+    focus: [
+      { type: "sine", start: 420, end: 560, duration: 0.08, gain: 0.03 },
+      { type: "triangle", start: 760, end: 620, duration: 0.1, gain: 0.018, delay: 0.01 }
+    ],
+    swipe: [
+      { type: "triangle", start: 920, end: 380, duration: 0.11, gain: 0.04 }
+    ],
+    expand: [
+      { type: "triangle", start: 420, end: 1220, duration: 0.18, gain: 0.055 },
+      { type: "sine", start: 860, end: 1280, duration: 0.2, gain: 0.022, delay: 0.03 }
+    ],
+    open: [
+      { type: "triangle", start: 760, end: 1120, duration: 0.11, gain: 0.045 },
+      { type: "sine", start: 1120, end: 1380, duration: 0.12, gain: 0.018, delay: 0.02 }
+    ],
+    return: [
+      { type: "triangle", start: 520, end: 180, duration: 0.18, gain: 0.05 }
+    ]
+  };
+
+  const recipe = tones[kind];
+  if (!recipe) return;
+
+  recipe.forEach((tone) => {
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+    const startAt = now + (tone.delay || 0);
+    const stopAt = startAt + tone.duration;
+
+    oscillator.type = tone.type;
+    oscillator.frequency.setValueAtTime(tone.start, startAt);
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(80, tone.end), stopAt);
+    gainNode.gain.setValueAtTime(0.0001, startAt);
+    gainNode.gain.exponentialRampToValueAtTime(tone.gain, startAt + 0.018);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, stopAt);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+    oscillator.start(startAt);
+    oscillator.stop(stopAt);
+  });
+}
 
 function getActiveCatalog() {
   return catalogs.find((catalog) => catalog.id === state.activeCatalogId) || null;
@@ -335,6 +418,7 @@ function renderDock() {
   dock.querySelectorAll(".dock-card").forEach((card) => {
     card.addEventListener("click", () => {
       stopDemo();
+      playUiSound("select");
       activateCatalog(card.dataset.catalogId, "Pulled from wall");
     });
   });
@@ -363,6 +447,7 @@ function renderModes() {
     pill.addEventListener("click", () => {
       if (!catalog || !canUseMode(catalog, pill.dataset.mode)) return;
       stopDemo();
+      playUiSound("select");
       state.interactionMode = pill.dataset.mode;
       state.fanOpen = pill.dataset.mode !== "carousel";
       state.lastGesture = `Mode: ${pill.dataset.mode}`;
@@ -629,6 +714,7 @@ function attachGesture(card) {
           clearTimeout(state.focusClickTimer);
           state.focusClickTimer = null;
         }
+        playUiSound("expand");
         openZoomView();
         return;
       }
@@ -637,6 +723,7 @@ function attachGesture(card) {
         clearTimeout(state.focusClickTimer);
       }
       state.focusClickTimer = setTimeout(() => {
+        playUiSound("focus");
         focusCurrentItem();
         state.focusClickTimer = null;
       }, 240);
