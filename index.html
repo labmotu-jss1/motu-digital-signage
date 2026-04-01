@@ -2,55 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MOTU Digital Signage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="./css/layout.css" />
 </head>
 
 <body>
-  <header>
-    <h1>MOTU Digital Signage</h1>
-    <div id="clock"></div>
-  </header>
+  <div class="screen-shell">
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="ambient ambient-c"></div>
 
-  <main id="container">
-    <!-- PANEL A : VIDEO -->
-    <section id="panelA">
-      <video
-        id="panelAVideo"
-        src="./panelA/panelA.mp4"
-        autoplay
-        muted
-        loop
-        playsinline>
-      </video>
-    </section>
-
-    <!-- PANEL B : INFO COLUMN -->
-    <section id="panelB">
-
-      <!-- WEATHER WIDGET (REPLACES NEWS) -->
-      <div id="weatherWidgetBox">
-        <iframe
-          src="https://api.wo-cloud.com/content/widget/?geoObjectKey=42748473&language=en&region=US&timeFormat=HH:mm&windUnit=mph&systemOfMeasurement=imperial&temperatureUnit=fahrenheit"
-          scrolling="no"
-          frameborder="0">
-        </iframe>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div class="brand-copy">
+          <p class="eyebrow">MOTU Network Operations</p>
+          <h1>MOTU Digital Signage</h1>
+        </div>
       </div>
 
-      <!-- CALENDAR -->
-      <div id="calendarBox">
-        <h2>Upcoming Events</h2>
-        <div id="calendarTrack">Loading calendar...</div>
+      <div class="status-cluster">
+        <div class="status-chip">
+          <span class="status-dot"></span>
+          Live Broadcast
+        </div>
+        <div id="clock" class="clock-card"></div>
       </div>
+    </header>
 
-    </section>
-  </main>
+    <main class="dashboard">
+      <section class="hero-panel">
+        <div class="hero-media-frame">
+          <video
+            id="panelAVideo"
+            src="./panelA/panelA.mp4"
+            autoplay
+            muted
+            loop
+            playsinline>
+          </video>
+          <div class="hero-overlay"></div>
+        </div>
 
-  <footer id="ticker">
-    <span id="tickerText">Loading...</span>
-  </footer>
+        <div class="hero-content">
+          <div class="hero-copy">
+            <p class="eyebrow">Now Showing</p>
+            <h2>Information-first signage with a premium broadcast look.</h2>
+            <p class="hero-text">
+              A redesigned lobby screen with cinematic framing, clearer hierarchy,
+              and faster scanability from a distance.
+            </p>
+          </div>
 
-  <!-- JS -->
+          <div class="hero-feature">
+            <p class="feature-label">Next Event</p>
+            <strong id="nextEventTitle">Loading events...</strong>
+            <span id="nextEventMeta">Checking the calendar feed</span>
+          </div>
+
+          <div class="metric-row">
+            <div class="metric-card">
+              <span>Mode</span>
+              <strong>4K Display</strong>
+            </div>
+            <div class="metric-card">
+              <span>Refresh</span>
+              <strong>Live Sync</strong>
+            </div>
+            <div class="metric-card">
+              <span>Design</span>
+              <strong>Broadcast UI</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <section class="info-card weather-card">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Conditions</p>
+              <h3>Local Weather</h3>
+            </div>
+          </div>
+          <div id="weatherWidgetBox">
+            <iframe
+              src="https://api.wo-cloud.com/content/widget/?geoObjectKey=42748473&language=en&region=US&timeFormat=HH:mm&windUnit=mph&systemOfMeasurement=imperial&temperatureUnit=fahrenheit"
+              scrolling="no"
+              frameborder="0"
+              title="Weather widget">
+            </iframe>
+          </div>
+        </section>
+
+        <section class="info-card agenda-card">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Schedule</p>
+              <h3>Upcoming Events</h3>
+            </div>
+            <div id="eventsCount" class="count-pill">0 Loaded</div>
+          </div>
+          <div id="calendarTrack" class="calendar-track">Loading calendar...</div>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="ticker-shell">
+      <div class="ticker-label">Announcements</div>
+      <div id="ticker" class="ticker">
+        <div id="tickerText" class="ticker-track">Loading...</div>
+      </div>
+    </footer>
+  </div>
+
   <script src="./js/clock.js"></script>
   <script src="./js/calendar.js"></script>
   <script src="./js/ticker.js"></script>
