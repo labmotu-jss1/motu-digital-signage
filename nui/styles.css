@@ -632,7 +632,7 @@ body::before {
   position: absolute;
   left: 14px;
   right: 14px;
-  bottom: 12px;
+  bottom: 14px;
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.2;
@@ -641,6 +641,7 @@ body::before {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 .asset-badge {
@@ -947,14 +948,8 @@ body::before {
   }
 
   .dock-list {
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 8px;
-  }
-
-  .dock-card {
-    min-height: 180px;
+    gap: 8px;
+    padding-bottom: 4px;
   }
 
   .stack-card {
@@ -1012,10 +1007,6 @@ body::before {
   .panel-pill,
   .detail-chip {
     font-size: 0.82rem;
-  }
-
-  .dock-list {
-    grid-template-columns: repeat(2, 240px);
   }
 
   .stage {
