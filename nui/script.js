@@ -153,6 +153,7 @@ const demoButton = document.getElementById("demoButton");
 const fanButton = document.getElementById("fanButton");
 const resetButton = document.getElementById("resetButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
+const expandItemButton = document.getElementById("expandItemButton");
 const openItemButton = document.getElementById("openItemButton");
 const zoomOverlay = document.getElementById("zoomOverlay");
 const zoomTitle = document.getElementById("zoomTitle");
@@ -208,6 +209,12 @@ resetButton.addEventListener("click", () => {
   renderDock();
   renderModes();
   renderEmpty();
+});
+
+expandItemButton.addEventListener("click", () => {
+  if (!getActiveCatalog()) return;
+  stopDemo();
+  openZoomView();
 });
 
 openItemButton.addEventListener("click", () => {
@@ -398,6 +405,7 @@ function renderEmpty() {
   telemetryIndex.textContent = "0 / 0";
   telemetryGesture.textContent = state.lastGesture;
   telemetryMode.textContent = "Fan";
+  expandItemButton.disabled = true;
   openItemButton.disabled = true;
   demoButton.classList.remove("active-demo");
   demoButton.textContent = "Auto Demo";
@@ -413,7 +421,7 @@ function renderStage() {
 
   stageTitle.textContent = catalog.title;
   detailBadge.textContent = catalog.badge;
-  gestureHint.textContent = "Swipe the top card, tap it to expand, use Previous / Next, or start Auto Demo to see the wall behavior immediately.";
+  gestureHint.textContent = "Swipe the top card, single-click to focus it, double-click or use Expand Item to enlarge it, or use Previous / Next.";
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop Demo" : "Auto Demo";
 
@@ -425,7 +433,7 @@ function renderStage() {
     topCard.addEventListener("click", () => {
       if (Date.now() < state.suppressCardClickUntil) return;
       stopDemo();
-      openZoomView();
+      focusCurrentItem();
     });
     topCard.addEventListener("dblclick", () => {
       stopDemo();
@@ -442,6 +450,7 @@ function renderStage() {
   telemetryIndex.textContent = `${state.activeIndex + 1} / ${catalog.items.length}`;
   telemetryGesture.textContent = state.lastGesture;
   telemetryMode.textContent = state.interactionMode;
+  expandItemButton.disabled = false;
   openItemButton.disabled = false;
   renderZoomView();
 }
