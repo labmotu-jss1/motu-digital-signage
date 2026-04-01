@@ -238,18 +238,16 @@ body::before {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .dock-card {
   position: relative;
-  overflow: hidden;
-  padding: 14px 16px;
-  border-radius: 20px;
+  overflow: visible;
+  padding: 10px 14px;
+  border-radius: 999px;
   border: 1px solid var(--line);
-  background:
-    linear-gradient(145deg, rgba(103, 239, 255, 0.08), transparent 44%),
-    var(--panel-strong);
+  background: rgba(8, 20, 33, 0.9);
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   display: inline-flex;
@@ -258,17 +256,11 @@ body::before {
   width: auto;
   max-width: max-content;
   min-height: 0;
+  box-shadow: none;
 }
 
 .dock-card::after {
-  content: "";
-  position: absolute;
-  inset: auto -8% -18% auto;
-  width: 120px;
-  height: 120px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  filter: blur(10px);
+  content: none;
 }
 
 .dock-card:hover,
@@ -280,8 +272,8 @@ body::before {
 
 .dock-card h4 {
   margin-top: 0;
-  font-size: 1rem;
-  line-height: 1.22;
+  font-size: 0.96rem;
+  line-height: 1;
   white-space: nowrap;
   display: inline-block;
 }
