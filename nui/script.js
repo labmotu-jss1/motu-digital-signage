@@ -137,6 +137,7 @@ const fallbackCatalogs = [
 
 let catalogs = [];
 const remoteCatalogsUrl = "https://40-160-254-60.sslip.io/motu-lib/catalogs.json";
+const catalogRefreshMs = 15000;
 
 const dock = document.getElementById("dock");
 const stackLayer = document.getElementById("stackLayer");
@@ -190,7 +191,8 @@ const state = {
   focusClickTimer: null,
   lastTapAt: 0,
   zoomOpen: false,
-  zoomScale: 1
+  zoomScale: 1,
+  refreshTimer: null
 };
 
 setLoadingState();
@@ -431,6 +433,12 @@ async function init() {
   }
 
   activateCatalog(catalogs[0].id, catalogs === fallbackCatalogs ? "Sample loaded" : "Library synced");
+
+  if (!state.refreshTimer) {
+    state.refreshTimer = setInterval(() => {
+      void refreshCatalogs();
+    }, catalogRefreshMs);
+  }
 }
 
 async function loadCatalogs() {
@@ -456,6 +464,40 @@ function setLoadingState() {
   catalogCount.textContent = "Loading";
   stageTitle.textContent = "Loading catalog";
   expandItemButton.disabled = true;
+}
+
+async function refreshCatalogs() {
+  const nextCatalogs = await loadCatalogs();
+  if (!Array.isArray(nextCatalogs) || nextCatalogs.length === 0) return;
+
+  const changed = JSON.stringify(nextCatalogs.map((catalog) => ({
+    id: catalog.id,
+    title: catalog.title,
+    items: catalog.items?.length || 0
+  }))) !== JSON.stringify(catalogs.map((catalog) => ({
+    id: catalog.id,
+    title: catalog.title,
+    items: catalog.items?.length || 0
+  })));
+
+  if (!changed) return;
+
+  const currentId = state.activeCatalogId;
+  catalogs = nextCatalogs;
+  catalogCount.textContent = `${catalogs.length} Catalogs`;
+
+  if (!currentId || !catalogs.some((catalog) => catalog.id === currentId)) {
+    renderDock();
+    renderModes();
+    activateCatalog(catalogs[0].id, "Library refreshed");
+    return;
+  }
+
+  const activeCatalog = getActiveCatalog();
+  state.activeIndex = Math.min(state.activeIndex, Math.max(0, (activeCatalog?.items?.length || 1) - 1));
+  renderDock();
+  renderModes();
+  renderStage();
 }
 
 function renderDock() {

@@ -245,7 +245,7 @@ body::before {
   position: relative;
   overflow: visible;
   padding: 10px 14px;
-  border-radius: 999px;
+  border-radius: 14px;
   border: 1px solid var(--line);
   background: rgba(8, 20, 33, 0.9);
   cursor: pointer;
