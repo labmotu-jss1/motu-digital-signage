@@ -235,22 +235,27 @@ body::before {
 }
 
 .dock-list {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 12px;
-  grid-template-columns: repeat(6, minmax(180px, 1fr));
 }
 
 .dock-card {
   position: relative;
   overflow: hidden;
-  padding: 16px 14px;
-  border-radius: 24px;
+  padding: 14px 16px;
+  border-radius: 20px;
   border: 1px solid var(--line);
   background:
     linear-gradient(145deg, rgba(103, 239, 255, 0.08), transparent 44%),
     var(--panel-strong);
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  flex: 0 0 auto;
+  width: fit-content;
+  max-width: min(100%, 420px);
+  min-height: 0;
 }
 
 .dock-card::after {
@@ -273,8 +278,9 @@ body::before {
 
 .dock-card h4 {
   margin-top: 0;
-  font-size: 1.08rem;
+  font-size: 1rem;
   line-height: 1.22;
+  white-space: nowrap;
 }
 
 .stage {
