@@ -586,11 +586,7 @@ function renderCubeStage(catalog) {
             data-index="${item.index}"
           >
             <div class="cube-face-glow"></div>
-            ${renderPreview(catalog, item)}
-            <div class="cube-face-copy">
-              <h4>${item.title}</h4>
-              <p>${item.description}</p>
-            </div>
+            ${renderCubeFacePreview(catalog, item)}
           </article>
         `).join("")}
       </div>
@@ -600,14 +596,6 @@ function renderCubeStage(catalog) {
   const scene = document.getElementById("cubeScene");
   const cube = document.getElementById("catalogCube");
   attachCubeInteraction(scene, cube);
-
-  stackLayer.querySelectorAll(".cube-face").forEach((face) => {
-    face.addEventListener("click", () => openCubeFace(face.dataset.index));
-    face.addEventListener("pointerup", () => {
-      if (state.cubePointer?.moved) return;
-      openCubeFace(face.dataset.index);
-    });
-  });
 }
 
 function openCubeFace(index) {
@@ -620,6 +608,18 @@ function openCubeFace(index) {
   state.lastGesture = "Cube face opened";
   renderModes();
   renderStage();
+}
+
+function renderCubeFacePreview(catalog, item) {
+  if (item.assetUrl) {
+    return `
+      <div class="preview-shell asset cube-preview">
+        <img src="${item.assetUrl}" alt="${item.title}" loading="lazy" />
+      </div>
+    `;
+  }
+
+  return renderPreview(catalog, item);
 }
 
 function buildOrderedItems(catalog) {
@@ -748,18 +748,17 @@ function renderPreview(catalog, item) {
 
 function attachCubeInteraction(scene, cube) {
   scene.addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".cube-face")) {
-      state.cubePointer = {
-        id: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        startRotationX: state.cubeRotationX,
-        startRotationY: state.cubeRotationY,
-        moved: false
-      };
-      scene.classList.add("manual");
-      scene.setPointerCapture(event.pointerId);
-    }
+    state.cubePointer = {
+      id: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startRotationX: state.cubeRotationX,
+      startRotationY: state.cubeRotationY,
+      moved: false,
+      faceIndex: event.target.closest(".cube-face")?.dataset.index || null
+    };
+    scene.classList.add("manual");
+    scene.setPointerCapture(event.pointerId);
   });
 
   scene.addEventListener("pointermove", (event) => {
@@ -779,8 +778,15 @@ function attachCubeInteraction(scene, cube) {
   scene.addEventListener("pointerup", (event) => {
     if (!state.cubePointer || state.cubePointer.id !== event.pointerId) return;
 
+    const releasedFaceIndex = event.target.closest(".cube-face")?.dataset.index || null;
     if (state.cubePointer.moved) {
       state.suppressCardClickUntil = Date.now() + 240;
+    } else if (
+      state.cubePointer.faceIndex &&
+      releasedFaceIndex &&
+      state.cubePointer.faceIndex === releasedFaceIndex
+    ) {
+      openCubeFace(releasedFaceIndex);
     }
 
     state.cubePointer = null;
