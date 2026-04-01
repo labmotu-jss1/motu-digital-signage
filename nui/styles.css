@@ -634,7 +634,7 @@ body::before {
 }
 
 .fullscreen-on {
-  cursor: none;
+  cursor: auto;
 }
 
 @keyframes page-turn-forward {

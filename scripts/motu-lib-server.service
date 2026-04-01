@@ -1,0 +1,18 @@
+[Unit]
+Description=MOTU live library server
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu
+Environment=MOTU_LIB_HOST=127.0.0.1
+Environment=MOTU_LIB_PORT=3018
+Environment=MOTU_LIB_ROOT=/home/ubuntu/motu_lib
+Environment=MOTU_LIB_ALLOWED_ORIGIN=https://labmotu-jss1.github.io
+ExecStart=/usr/bin/node /home/ubuntu/motu-lib-server.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -136,6 +136,7 @@ const fallbackCatalogs = [
 ];
 
 let catalogs = [];
+const remoteCatalogsUrl = "https://40-160-254-60.sslip.io/motu-lib/catalogs.json";
 
 const dock = document.getElementById("dock");
 const stackLayer = document.getElementById("stackLayer");
@@ -265,7 +266,7 @@ async function init() {
 
 async function loadCatalogs() {
   try {
-    const response = await fetch("./data/catalogs.json", { cache: "no-store" });
+    const response = await fetch(remoteCatalogsUrl, { cache: "no-store", mode: "cors" });
     if (!response.ok) {
       throw new Error(`Catalog request failed: ${response.status}`);
     }
@@ -285,9 +286,9 @@ async function loadCatalogs() {
 function setLoadingState() {
   catalogCount.textContent = "Loading";
   stageTitle.textContent = "Loading catalog";
-  gestureHint.textContent = "Loading synced library content...";
+  gestureHint.textContent = "Loading live library content from the Cloud VM...";
   detailTitle.textContent = "Loading";
-  detailDescription.textContent = "Checking for published library data and preparing the wall.";
+  detailDescription.textContent = "Checking the live Cloud VM catalog and preparing the wall.";
   detailMeta.innerHTML = "";
   detailBadge.textContent = "Loading";
   telemetryCatalog.textContent = "Loading";
