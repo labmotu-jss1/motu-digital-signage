@@ -150,7 +150,6 @@ const fanButton = document.getElementById("fanButton");
 const resetButton = document.getElementById("resetButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
 const expandItemButton = document.getElementById("expandItemButton");
-const openItemButton = document.getElementById("openItemButton");
 const zoomOverlay = document.getElementById("zoomOverlay");
 const zoomTitle = document.getElementById("zoomTitle");
 const zoomImage = document.getElementById("zoomImage");
@@ -232,13 +231,6 @@ expandItemButton.addEventListener("click", () => {
     return;
   }
   openZoomView();
-});
-
-openItemButton.addEventListener("click", () => {
-  if (!getActiveCatalog()) return;
-  stopDemo();
-  playUiSound("open");
-  openCurrentItem();
 });
 
 zoomInButton.addEventListener("click", () => adjustZoom(0.25));
@@ -464,7 +456,6 @@ function setLoadingState() {
   catalogCount.textContent = "Loading";
   stageTitle.textContent = "Loading catalog";
   expandItemButton.disabled = true;
-  openItemButton.disabled = true;
 }
 
 function renderDock() {
@@ -529,7 +520,6 @@ function renderEmpty() {
   stageTitle.textContent = "Select a catalog";
   stackLayer.innerHTML = "";
   expandItemButton.disabled = true;
-  openItemButton.disabled = true;
   previousButton.disabled = true;
   nextButton.disabled = true;
   fanButton.disabled = true;
@@ -559,7 +549,6 @@ function renderStage() {
   if (state.interactionMode === "cube") {
     renderCubeStage(catalog);
     expandItemButton.disabled = true;
-    openItemButton.disabled = true;
     renderZoomView();
     return;
   }
@@ -567,7 +556,6 @@ function renderStage() {
   if (state.zoomOpen) {
     renderExpandedStage(catalog);
     expandItemButton.disabled = false;
-    openItemButton.disabled = false;
     renderZoomView();
     return;
   }
@@ -606,7 +594,6 @@ function renderStage() {
   }
 
   expandItemButton.disabled = false;
-  openItemButton.disabled = false;
   renderZoomView();
 }
 
@@ -1095,21 +1082,6 @@ function renderZoomView() {
   zoomNextButton.disabled = state.activeIndex >= getActiveCatalog().items.length - 1;
   zoomOutButton.disabled = !hasAsset || state.zoomScale <= 1;
   zoomInButton.disabled = !hasAsset || state.zoomScale >= 3;
-}
-
-function openCurrentItem() {
-  const catalog = getActiveCatalog();
-  if (!catalog) return;
-
-  const activeItem = catalog.items[state.activeIndex];
-  if (activeItem?.assetUrl) {
-    state.lastGesture = "Opened asset";
-    renderStage();
-    window.open(activeItem.assetUrl, "_blank", "noopener");
-    return;
-  }
-
-  focusCurrentItem();
 }
 
 function turnCatalog(direction) {

@@ -46,10 +46,10 @@ body::before {
 
 .wall-app {
   min-height: 100vh;
-  padding: 84px 18px 18px;
+  padding: 68px 14px 14px;
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 16px;
+  gap: 10px;
 }
 
 .topbar,
@@ -160,13 +160,13 @@ body::before {
   grid-template-areas:
     "stage"
     "dock";
-  gap: 16px;
+  gap: 10px;
   min-height: 0;
 }
 
 .dock-panel,
 .stage-panel {
-  padding: 16px;
+  padding: 12px;
   min-height: 0;
 }
 
@@ -174,7 +174,7 @@ body::before {
   grid-area: stage;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: 4px;
 }
 
 .dock-panel {
@@ -191,7 +191,7 @@ body::before {
 
 .stage-banner {
   margin-bottom: 0;
-  padding-top: 2px;
+  padding-top: 0;
 }
 
 .panel-head h3 {
@@ -290,26 +290,12 @@ body::before {
   border-radius: 30px;
   border: 1px solid var(--line);
   overflow: hidden;
-  min-height: 560px;
+  min-height: 640px;
   background:
     radial-gradient(circle at 18% 22%, rgba(175, 255, 155, 0.08), transparent 18%),
     radial-gradient(circle at 82% 18%, rgba(255, 160, 160, 0.08), transparent 16%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
   isolation: isolate;
-}
-
-.stage-guides {
-  position: absolute;
-  top: 18px;
-  left: 20px;
-  right: 20px;
-  display: flex;
-  justify-content: space-between;
-  color: rgba(255, 255, 255, 0.34);
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  pointer-events: none;
 }
 
 .stack-layer {
@@ -451,10 +437,10 @@ body::before {
 
 .expanded-stage-card {
   width: min(1100px, 88vw);
-  height: min(72vh, 760px);
+  height: min(80vh, 860px);
   display: grid;
   place-items: center;
-  padding: 18px;
+  padding: 10px;
   border-radius: 34px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -470,7 +456,7 @@ body::before {
 }
 
 .expanded-stage-media {
-  overflow: auto;
+  overflow: hidden;
   border-radius: 24px;
   display: grid;
   place-items: center;
@@ -855,8 +841,8 @@ body::before {
 
 @media (max-width: 900px) {
   .wall-app {
-    padding: 88px 14px 14px;
-    gap: 14px;
+    padding: 72px 12px 12px;
+    gap: 10px;
   }
 
   .topbar,
@@ -900,7 +886,7 @@ body::before {
   }
 
   .stage {
-    min-height: 440px;
+    min-height: 520px;
   }
 
   .stack-card {
