@@ -46,17 +46,15 @@ body::before {
 
 .wall-app {
   min-height: 100vh;
-  padding: 22px;
+  padding: 18px;
   display: grid;
-  grid-template-rows: auto auto 1fr;
-  gap: 18px;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
 }
 
 .topbar,
-.hero-band,
 .dock-panel,
 .stage-panel,
-.detail-panel,
 .gesture-card,
 .dock-card,
 .stack-card,
@@ -70,10 +68,8 @@ body::before {
 }
 
 .topbar,
-.hero-band,
 .dock-panel,
-.stage-panel,
-.detail-panel {
+.stage-panel {
   border: 1px solid var(--line);
   border-radius: 28px;
   background: var(--panel);
@@ -81,15 +77,17 @@ body::before {
 }
 
 .topbar {
-  padding: 18px 22px;
+  position: sticky;
+  top: 12px;
+  z-index: 80;
+  padding: 14px 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
 }
 
 .topbar h1,
-.hero-band h2,
 .panel-head h3,
 .dock-card h4,
 .stack-card h4 {
@@ -98,7 +96,7 @@ body::before {
 }
 
 .topbar h1 {
-  font-size: clamp(2rem, 3vw, 3.2rem);
+  font-size: clamp(1.5rem, 2.2vw, 2.2rem);
 }
 
 .eyebrow {
@@ -111,11 +109,10 @@ body::before {
 
 .topbar-actions,
 .mode-pills,
-.stage-actions,
-.detail-meta {
+.zoom-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .mode-pill,
@@ -144,8 +141,10 @@ body::before {
 }
 
 .control-button {
-  padding: 12px 16px;
+  padding: 9px 12px;
   font: inherit;
+  font-size: 0.92rem;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -154,60 +153,28 @@ body::before {
   background: linear-gradient(135deg, var(--amber), var(--cyan));
 }
 
-.hero-band {
-  padding: 22px;
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 18px;
-}
-
-.hero-band h2 {
-  margin-top: 8px;
-  max-width: 15ch;
-  font-size: clamp(1.35rem, 2.4vw, 2.4rem);
-  line-height: 0.92;
-}
-
-.hero-band p {
-  max-width: 48rem;
-  color: #d1e0ed;
-  line-height: 1.55;
-}
-
-.gesture-strip {
-  display: grid;
-  gap: 12px;
-}
-
-.gesture-card {
-  min-height: 112px;
-  padding: 18px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 45%),
-    rgba(255, 255, 255, 0.04);
-  display: grid;
-  gap: 10px;
-}
-
-.gesture-card strong {
-  color: var(--amber);
-  font-size: 1.18rem;
-}
-
 .main-grid {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 340px;
-  gap: 18px;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "stage"
+    "dock";
+  gap: 16px;
   min-height: 0;
 }
 
 .dock-panel,
-.stage-panel,
-.detail-panel {
-  padding: 18px;
+.stage-panel {
+  padding: 16px;
   min-height: 0;
+}
+
+.stage-panel {
+  grid-area: stage;
+}
+
+.dock-panel {
+  grid-area: dock;
 }
 
 .panel-head {
@@ -225,7 +192,8 @@ body::before {
 
 .dock-list {
   display: grid;
-  gap: 14px;
+  gap: 12px;
+  grid-template-columns: repeat(6, minmax(180px, 1fr));
 }
 
 .dock-card {
@@ -287,11 +255,6 @@ body::before {
 
 .dock-mode {
   color: #d8fbff;
-}
-
-.stage-panel {
-  display: grid;
-  grid-template-rows: auto 1fr;
 }
 
 .stage {
@@ -583,36 +546,6 @@ body::before {
   font-size: 0.82rem;
 }
 
-.detail-description {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.65;
-}
-
-.detail-meta {
-  margin-top: 16px;
-}
-
-.telemetry {
-  margin-top: 18px;
-  display: grid;
-  gap: 10px;
-}
-
-.detail-actions {
-  margin-top: 16px;
-}
-
-.detail-open-button {
-  width: 100%;
-  justify-content: center;
-}
-
-.detail-open-button:disabled {
-  cursor: default;
-  opacity: 0.45;
-}
-
 .zoom-overlay {
   position: fixed;
   inset: 0;
@@ -688,26 +621,6 @@ body::before {
   overflow: hidden;
 }
 
-.telemetry-row {
-  min-height: 52px;
-  padding: 12px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.telemetry-row span {
-  color: var(--muted);
-}
-
-.telemetry-row strong {
-  font-size: 1rem;
-}
-
 .fullscreen-on {
   cursor: auto;
 }
@@ -741,46 +654,8 @@ body::before {
     min-height: 100vh;
   }
 
-  .hero-band,
-  .main-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-band h2 {
-    max-width: 22ch;
-    font-size: clamp(1.2rem, 3.2vw, 2rem);
-  }
-
-  .hero-band {
-    padding: 18px;
-    gap: 14px;
-  }
-
-  .gesture-strip {
-    grid-template-columns: 1fr;
-  }
-
-  .main-grid {
-    grid-template-areas:
-      "stage"
-      "dock"
-      "detail";
-  }
-
-  .stage-panel {
-    grid-area: stage;
-  }
-
-  .dock-panel {
-    grid-area: dock;
-  }
-
-  .detail-panel {
-    grid-area: detail;
-  }
-
   .dock-list {
-    grid-template-columns: repeat(4, minmax(260px, 1fr));
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 8px;
@@ -807,17 +682,15 @@ body::before {
   }
 
   .topbar,
-  .hero-band,
   .dock-panel,
-  .stage-panel,
-  .detail-panel {
+  .stage-panel {
     border-radius: 22px;
   }
 
   .topbar {
     padding: 14px 16px;
-    align-items: start;
     flex-direction: column;
+    align-items: stretch;
   }
 
   .topbar h1 {
@@ -826,11 +699,11 @@ body::before {
 
   .topbar-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 
   .mode-pills {
-    flex: 1;
+    width: 100%;
   }
 
   .mode-pill,
@@ -840,30 +713,8 @@ body::before {
     font-size: 0.92rem;
   }
 
-  .hero-band h2 {
-    font-size: clamp(1.05rem, 4.2vw, 1.65rem);
-    line-height: 1.05;
-  }
-
-  .hero-band p {
-    font-size: 0.95rem;
-  }
-
-  .gesture-card {
-    min-height: 92px;
-    padding: 14px;
-  }
-
-  .stage-actions {
-    width: 100%;
-  }
-
-  .stage-actions .control-button {
-    flex: 1 1 140px;
-  }
-
   .dock-list {
-    grid-template-columns: repeat(4, 240px);
+    grid-template-columns: repeat(2, 240px);
   }
 
   .stage {
@@ -878,10 +729,6 @@ body::before {
 
   .preview-shell {
     height: 150px;
-  }
-
-  .detail-panel {
-    padding-bottom: 24px;
   }
 
   .zoom-overlay {

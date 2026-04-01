@@ -142,10 +142,6 @@ const dock = document.getElementById("dock");
 const stackLayer = document.getElementById("stackLayer");
 const stageTitle = document.getElementById("stageTitle");
 const gestureHint = document.getElementById("gestureHint");
-const detailTitle = document.getElementById("detailTitle");
-const detailDescription = document.getElementById("detailDescription");
-const detailMeta = document.getElementById("detailMeta");
-const detailBadge = document.getElementById("detailBadge");
 const modePills = document.getElementById("modePills");
 const previousButton = document.getElementById("previousButton");
 const nextButton = document.getElementById("nextButton");
@@ -161,10 +157,6 @@ const zoomImage = document.getElementById("zoomImage");
 const zoomInButton = document.getElementById("zoomInButton");
 const zoomOutButton = document.getElementById("zoomOutButton");
 const zoomCloseButton = document.getElementById("zoomCloseButton");
-const telemetryCatalog = document.getElementById("telemetryCatalog");
-const telemetryIndex = document.getElementById("telemetryIndex");
-const telemetryGesture = document.getElementById("telemetryGesture");
-const telemetryMode = document.getElementById("telemetryMode");
 const catalogCount = document.getElementById("catalogCount");
 
 const gestureConfig = {
@@ -323,14 +315,7 @@ function setLoadingState() {
   catalogCount.textContent = "Loading";
   stageTitle.textContent = "Loading catalog";
   gestureHint.textContent = "Loading live library content from the Cloud VM...";
-  detailTitle.textContent = "Loading";
-  detailDescription.textContent = "Checking the live Cloud VM catalog and preparing the wall.";
-  detailMeta.innerHTML = "";
-  detailBadge.textContent = "Loading";
-  telemetryCatalog.textContent = "Loading";
-  telemetryIndex.textContent = "0 / 0";
-  telemetryGesture.textContent = "Boot";
-  telemetryMode.textContent = "Fan";
+  expandItemButton.disabled = true;
   openItemButton.disabled = true;
 }
 
@@ -397,14 +382,6 @@ function renderEmpty() {
   stageTitle.textContent = "Select a catalog";
   gestureHint.textContent = "Tap a catalog on the left to begin, or use the sample stack that loads by default.";
   stackLayer.innerHTML = "";
-  detailTitle.textContent = "No catalog active";
-  detailDescription.textContent = "The active item summary will appear here with gesture hints, tags, and the current catalog mode.";
-  detailMeta.innerHTML = "";
-  detailBadge.textContent = "Idle";
-  telemetryCatalog.textContent = "None";
-  telemetryIndex.textContent = "0 / 0";
-  telemetryGesture.textContent = state.lastGesture;
-  telemetryMode.textContent = "Fan";
   expandItemButton.disabled = true;
   openItemButton.disabled = true;
   demoButton.classList.remove("active-demo");
@@ -420,8 +397,7 @@ function renderStage() {
   }
 
   stageTitle.textContent = catalog.title;
-  detailBadge.textContent = catalog.badge;
-  gestureHint.textContent = "Swipe the top card, single-click to focus it, double-click or use Expand Item to enlarge it, or use Previous / Next.";
+  gestureHint.textContent = "Swipe the top card, single-click to focus it, double-click or use Expand to enlarge it, or use Previous / Next.";
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop Demo" : "Auto Demo";
 
@@ -442,14 +418,6 @@ function renderStage() {
     attachGesture(topCard);
   }
 
-  const activeItem = catalog.items[state.activeIndex];
-  detailTitle.textContent = activeItem.title;
-  detailDescription.textContent = activeItem.description;
-  detailMeta.innerHTML = activeItem.meta.map((entry) => `<span class="detail-chip">${entry}</span>`).join("");
-  telemetryCatalog.textContent = catalog.title;
-  telemetryIndex.textContent = `${state.activeIndex + 1} / ${catalog.items.length}`;
-  telemetryGesture.textContent = state.lastGesture;
-  telemetryMode.textContent = state.interactionMode;
   expandItemButton.disabled = false;
   openItemButton.disabled = false;
   renderZoomView();

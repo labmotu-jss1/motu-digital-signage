@@ -22,62 +22,25 @@
 
       <div class="topbar-actions">
         <div id="modePills" class="mode-pills" aria-label="Catalog modes"></div>
+        <button id="previousButton" class="control-button" type="button">Previous</button>
+        <button id="nextButton" class="control-button" type="button">Next</button>
+        <button id="demoButton" class="control-button" type="button">Auto Demo</button>
+        <button id="fanButton" class="control-button" type="button">Fan Open</button>
+        <button id="expandItemButton" class="control-button" type="button">Expand</button>
+        <button id="openItemButton" class="control-button" type="button">Open</button>
+        <button id="resetButton" class="control-button" type="button">Return</button>
         <button id="fullscreenButton" class="control-button" type="button">Fullscreen</button>
       </div>
     </header>
 
-    <section class="hero-band">
-      <div class="hero-copy">
-        <p class="eyebrow">Wall Workflow</p>
-        <h2>Pull a stack off the wall, spread it open, rotate through the contents, and throw it back.</h2>
-        <p>
-          This is a touch-first wall interface for catalogs, media reels, folders, binders,
-          and field packets. The controls are deliberately oversized and tuned for swipe,
-          throw, fan-open, and page-turn interactions.
-        </p>
-      </div>
-
-      <div class="gesture-strip">
-        <div class="gesture-card">
-          <strong>Tap catalog</strong>
-          <span>Bring a stack onto the stage</span>
-        </div>
-        <div class="gesture-card">
-          <strong>Swipe left / right</strong>
-          <span>Spin through items with momentum</span>
-        </div>
-        <div class="gesture-card">
-          <strong>Pull upward</strong>
-          <span>Throw the stack back into the dock</span>
-        </div>
-      </div>
-    </section>
-
     <section class="main-grid">
-      <aside class="dock-panel">
-        <div class="panel-head">
-          <div>
-            <p class="eyebrow">Wall Dock</p>
-            <h3>Catalog Rail</h3>
-          </div>
-          <div id="catalogCount" class="panel-pill"></div>
-        </div>
-        <div id="dock" class="dock-list"></div>
-      </aside>
-
       <section class="stage-panel">
         <div class="panel-head">
           <div>
             <p class="eyebrow">Active Stage</p>
             <h3 id="stageTitle">Select a catalog</h3>
           </div>
-          <div class="stage-actions">
-            <button id="previousButton" class="control-button" type="button">Previous</button>
-            <button id="nextButton" class="control-button" type="button">Next</button>
-            <button id="demoButton" class="control-button" type="button">Auto Demo</button>
-            <button id="fanButton" class="control-button" type="button">Fan Open</button>
-            <button id="resetButton" class="control-button" type="button">Return To Wall</button>
-          </div>
+          <div id="catalogCount" class="panel-pill"></div>
         </div>
 
         <div id="stage" class="stage" aria-live="polite">
@@ -91,44 +54,14 @@
         </div>
       </section>
 
-      <aside class="detail-panel">
+      <aside class="dock-panel">
         <div class="panel-head">
           <div>
-            <p class="eyebrow">Inspector</p>
-            <h3 id="detailTitle">No catalog active</h3>
+            <p class="eyebrow">Wall Dock</p>
+            <h3>Catalog Rail</h3>
           </div>
-          <div id="detailBadge" class="panel-pill panel-pill-alt">Idle</div>
         </div>
-
-        <p id="detailDescription" class="detail-description">
-          The active item summary will appear here with gesture hints, tags, and the current catalog mode.
-        </p>
-
-        <div id="detailMeta" class="detail-meta"></div>
-
-        <section class="telemetry">
-          <div class="telemetry-row">
-            <span>Catalog</span>
-            <strong id="telemetryCatalog">None</strong>
-          </div>
-          <div class="telemetry-row">
-            <span>Position</span>
-            <strong id="telemetryIndex">0 / 0</strong>
-          </div>
-          <div class="telemetry-row">
-            <span>Gesture</span>
-            <strong id="telemetryGesture">Waiting</strong>
-          </div>
-          <div class="telemetry-row">
-            <span>Mode</span>
-            <strong id="telemetryMode">Fan</strong>
-          </div>
-        </section>
-
-        <div class="detail-actions">
-          <button id="expandItemButton" class="control-button detail-open-button" type="button">Expand Item</button>
-          <button id="openItemButton" class="control-button detail-open-button" type="button">Open Item</button>
-        </div>
+        <div id="dock" class="dock-list"></div>
       </aside>
     </section>
   </main>
