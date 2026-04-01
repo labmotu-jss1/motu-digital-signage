@@ -244,19 +244,20 @@ body::before {
 .dock-card {
   position: relative;
   overflow: visible;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 14px;
   border: 1px solid var(--line);
   background: rgba(8, 20, 33, 0.9);
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   flex: 0 1 auto;
   width: auto;
   max-width: max-content;
-  min-height: 0;
+  min-height: auto;
   box-shadow: none;
+  align-self: flex-start;
 }
 
 .dock-card::after {
@@ -271,11 +272,12 @@ body::before {
 }
 
 .dock-card h4 {
-  margin-top: 0;
+  margin: 0;
   font-size: 0.96rem;
-  line-height: 1;
+  line-height: 1.05;
   white-space: nowrap;
   display: inline-block;
+  vertical-align: top;
 }
 
 .stage {
