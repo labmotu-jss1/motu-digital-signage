@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOTU NUI Wall Catalog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="wall-app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Natural User Interface</p>
+        <h1>Catalog Wall</h1>
+      </div>
+
+      <div class="topbar-actions">
+        <div id="modePills" class="mode-pills" aria-label="Catalog modes"></div>
+        <button id="fullscreenButton" class="control-button" type="button">Fullscreen</button>
+      </div>
+    </header>
+
+    <section class="hero-band">
+      <div class="hero-copy">
+        <p class="eyebrow">Wall Workflow</p>
+        <h2>Pull a stack off the wall, spread it open, rotate through the contents, and throw it back.</h2>
+        <p>
+          This is a touch-first wall interface for catalogs, media reels, folders, binders,
+          and field packets. The controls are deliberately oversized and tuned for swipe,
+          throw, fan-open, and page-turn interactions.
+        </p>
+      </div>
+
+      <div class="gesture-strip">
+        <div class="gesture-card">
+          <strong>Tap catalog</strong>
+          <span>Bring a stack onto the stage</span>
+        </div>
+        <div class="gesture-card">
+          <strong>Swipe left / right</strong>
+          <span>Spin through items with momentum</span>
+        </div>
+        <div class="gesture-card">
+          <strong>Pull upward</strong>
+          <span>Throw the stack back into the dock</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-grid">
+      <aside class="dock-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Wall Dock</p>
+            <h3>Catalog Rail</h3>
+          </div>
+          <div id="catalogCount" class="panel-pill"></div>
+        </div>
+        <div id="dock" class="dock-list"></div>
+      </aside>
+
+      <section class="stage-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Active Stage</p>
+            <h3 id="stageTitle">Select a catalog</h3>
+          </div>
+          <div class="stage-actions">
+            <button id="fanButton" class="control-button" type="button">Fan Open</button>
+            <button id="resetButton" class="control-button" type="button">Return To Wall</button>
+          </div>
+        </div>
+
+        <div id="stage" class="stage" aria-live="polite">
+          <div class="stage-guides">
+            <span>Swipe</span>
+            <span>Spin</span>
+            <span>Throw Back</span>
+          </div>
+          <div id="stackLayer" class="stack-layer"></div>
+          <div id="gestureHint" class="gesture-hint">Tap a catalog on the left to begin.</div>
+        </div>
+      </section>
+
+      <aside class="detail-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Inspector</p>
+            <h3 id="detailTitle">No catalog active</h3>
+          </div>
+          <div id="detailBadge" class="panel-pill panel-pill-alt">Idle</div>
+        </div>
+
+        <p id="detailDescription" class="detail-description">
+          The active item summary will appear here with gesture hints, tags, and the current catalog mode.
+        </p>
+
+        <div id="detailMeta" class="detail-meta"></div>
+
+        <section class="telemetry">
+          <div class="telemetry-row">
+            <span>Catalog</span>
+            <strong id="telemetryCatalog">None</strong>
+          </div>
+          <div class="telemetry-row">
+            <span>Position</span>
+            <strong id="telemetryIndex">0 / 0</strong>
+          </div>
+          <div class="telemetry-row">
+            <span>Gesture</span>
+            <strong id="telemetryGesture">Waiting</strong>
+          </div>
+          <div class="telemetry-row">
+            <span>Mode</span>
+            <strong id="telemetryMode">Fan</strong>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="./script.js"></script>
+</body>
+</html>
