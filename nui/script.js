@@ -177,6 +177,7 @@ const state = {
   demoTimer: null,
   demoRunning: false,
   focusClickTimer: null,
+  lastTapAt: 0,
   zoomOpen: false,
   zoomScale: 1
 };
@@ -409,17 +410,7 @@ function renderStage() {
   if (topCard) {
     topCard.addEventListener("click", (event) => {
       if (Date.now() < state.suppressCardClickUntil) return;
-      stopDemo();
-      if (event.detail !== 1) return;
-      if (state.focusClickTimer) {
-        clearTimeout(state.focusClickTimer);
-      }
-      state.focusClickTimer = setTimeout(() => {
-        focusCurrentItem();
-        state.focusClickTimer = null;
-      }, 220);
-    });
-    topCard.addEventListener("dblclick", () => {
+      if (event.detail !== 2) return;
       stopDemo();
       if (state.focusClickTimer) {
         clearTimeout(state.focusClickTimer);
@@ -631,7 +622,27 @@ function attachGesture(card) {
     } else {
       state.lastGesture = "Held";
       state.pointer = null;
-      renderStage();
+      card.style.transform = "";
+      if (Date.now() < state.suppressCardClickUntil) return;
+      stopDemo();
+      const now = Date.now();
+      if (now - state.lastTapAt < 320) {
+        state.lastTapAt = 0;
+        if (state.focusClickTimer) {
+          clearTimeout(state.focusClickTimer);
+          state.focusClickTimer = null;
+        }
+        openZoomView();
+        return;
+      }
+      state.lastTapAt = now;
+      if (state.focusClickTimer) {
+        clearTimeout(state.focusClickTimer);
+      }
+      state.focusClickTimer = setTimeout(() => {
+        focusCurrentItem();
+        state.focusClickTimer = null;
+      }, 240);
     }
   });
 }
