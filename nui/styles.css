@@ -147,6 +147,11 @@ body::before {
   cursor: pointer;
 }
 
+.control-button.active-demo {
+  color: #051019;
+  background: linear-gradient(135deg, var(--amber), var(--cyan));
+}
+
 .hero-band {
   padding: 22px;
   display: grid;

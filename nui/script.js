@@ -144,6 +144,9 @@ const detailDescription = document.getElementById("detailDescription");
 const detailMeta = document.getElementById("detailMeta");
 const detailBadge = document.getElementById("detailBadge");
 const modePills = document.getElementById("modePills");
+const previousButton = document.getElementById("previousButton");
+const nextButton = document.getElementById("nextButton");
+const demoButton = document.getElementById("demoButton");
 const fanButton = document.getElementById("fanButton");
 const resetButton = document.getElementById("resetButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
@@ -166,13 +169,15 @@ const state = {
   interactionMode: "fan",
   pointer: null,
   lastGesture: "Waiting",
-  pendingBinderTurn: null
+  pendingBinderTurn: null,
+  demoTimer: null,
+  demoRunning: false
 };
 
 catalogCount.textContent = `${catalogs.length} Catalogs`;
 renderDock();
 renderModes();
-renderEmpty();
+activateCatalog("media-gallery", "Sample loaded");
 
 fanButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
@@ -192,6 +197,27 @@ resetButton.addEventListener("click", () => {
   renderDock();
   renderModes();
   renderEmpty();
+});
+
+previousButton.addEventListener("click", () => {
+  if (!getActiveCatalog()) return;
+  stopDemo();
+  turnCatalog(-1);
+});
+
+nextButton.addEventListener("click", () => {
+  if (!getActiveCatalog()) return;
+  stopDemo();
+  turnCatalog(1);
+});
+
+demoButton.addEventListener("click", () => {
+  if (state.demoRunning) {
+    stopDemo();
+    renderStage();
+    return;
+  }
+  startDemo();
 });
 
 fullscreenButton.addEventListener("click", async () => {
@@ -230,14 +256,8 @@ function renderDock() {
 
   dock.querySelectorAll(".dock-card").forEach((card) => {
     card.addEventListener("click", () => {
-      state.activeCatalogId = card.dataset.catalogId;
-      state.activeIndex = 0;
-      state.fanOpen = true;
-      state.interactionMode = getActiveCatalog().mode === "binder" ? "binder" : "fan";
-      state.lastGesture = "Pulled from wall";
-      renderDock();
-      renderModes();
-      renderStage();
+      stopDemo();
+      activateCatalog(card.dataset.catalogId, "Pulled from wall");
     });
   });
 }
@@ -264,6 +284,7 @@ function renderModes() {
   modePills.querySelectorAll(".mode-pill").forEach((pill) => {
     pill.addEventListener("click", () => {
       if (!catalog || !canUseMode(catalog, pill.dataset.mode)) return;
+      stopDemo();
       state.interactionMode = pill.dataset.mode;
       state.fanOpen = pill.dataset.mode !== "carousel";
       state.lastGesture = `Mode: ${pill.dataset.mode}`;
@@ -282,7 +303,7 @@ function canUseMode(catalog, mode) {
 
 function renderEmpty() {
   stageTitle.textContent = "Select a catalog";
-  gestureHint.textContent = "Tap a catalog on the left to begin.";
+  gestureHint.textContent = "Tap a catalog on the left to begin, or use the sample stack that loads by default.";
   stackLayer.innerHTML = "";
   detailTitle.textContent = "No catalog active";
   detailDescription.textContent = "The active item summary will appear here with gesture hints, tags, and the current catalog mode.";
@@ -292,6 +313,8 @@ function renderEmpty() {
   telemetryIndex.textContent = "0 / 0";
   telemetryGesture.textContent = state.lastGesture;
   telemetryMode.textContent = "Fan";
+  demoButton.classList.remove("active-demo");
+  demoButton.textContent = "Auto Demo";
 }
 
 function renderStage() {
@@ -303,7 +326,9 @@ function renderStage() {
 
   stageTitle.textContent = catalog.title;
   detailBadge.textContent = catalog.badge;
-  gestureHint.textContent = "Swipe across the top card, or pull upward to return the stack to the dock.";
+  gestureHint.textContent = "Swipe the top card, use Previous / Next, or start Auto Demo to see the wall behavior immediately.";
+  demoButton.classList.toggle("active-demo", state.demoRunning);
+  demoButton.textContent = state.demoRunning ? "Stop Demo" : "Auto Demo";
 
   const items = buildOrderedItems(catalog);
   stackLayer.innerHTML = items.map((item) => renderCard(catalog, item)).join("");
@@ -532,4 +557,55 @@ function turnCatalog(direction) {
   state.activeIndex = (state.activeIndex + direction + catalog.items.length) % catalog.items.length;
   state.pointer = null;
   renderStage();
+}
+
+function activateCatalog(catalogId, gestureLabel) {
+  state.activeCatalogId = catalogId;
+  state.activeIndex = 0;
+  state.fanOpen = true;
+  state.interactionMode = getActiveCatalog().mode === "binder" ? "binder" : "fan";
+  state.lastGesture = gestureLabel;
+  renderDock();
+  renderModes();
+  renderStage();
+}
+
+function startDemo() {
+  if (!getActiveCatalog()) {
+    activateCatalog("media-gallery", "Demo loaded");
+  }
+
+  stopDemo();
+  state.demoRunning = true;
+  state.lastGesture = "Auto demo";
+  renderStage();
+
+  state.demoTimer = setInterval(() => {
+    const active = getActiveCatalog();
+    if (!active) return;
+
+    if (active.mode === "binder") {
+      turnCatalog(1);
+      return;
+    }
+
+    if (state.interactionMode === "fan") {
+      state.interactionMode = "carousel";
+      state.fanOpen = false;
+      state.lastGesture = "Demo switched mode";
+      renderModes();
+      renderStage();
+      return;
+    }
+
+    turnCatalog(1);
+  }, 1800);
+}
+
+function stopDemo() {
+  if (state.demoTimer) {
+    clearInterval(state.demoTimer);
+    state.demoTimer = null;
+  }
+  state.demoRunning = false;
 }
