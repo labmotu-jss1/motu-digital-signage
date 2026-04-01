@@ -622,6 +622,10 @@ body::before {
   padding: 24px;
 }
 
+.zoom-overlay[hidden] {
+  display: none;
+}
+
 .zoom-backdrop {
   position: absolute;
   inset: 0;
