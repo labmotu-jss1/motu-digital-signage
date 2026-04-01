@@ -574,6 +574,9 @@ function renderStage() {
     return;
   }
 
+  const stageElement = document.getElementById("stage");
+  stageElement?.classList.toggle("expanded-mode", state.zoomOpen);
+
   stageTitle.textContent = catalog.title;
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop" : "Demo";
@@ -659,7 +662,7 @@ function renderCubeStage(catalog) {
             style="${getCubeFaceStyle(item)}"
           >
             <div class="cube-face-glow"></div>
-            ${item.assetUrl ? "" : renderCubeFacePreview(catalog, item)}
+            ${(item.assetUrl && getAssetType(item) === "image") ? "" : renderCubeFacePreview(catalog, item)}
           </article>
         `).join("")}
       </div>
