@@ -176,6 +176,7 @@ const state = {
   pendingBinderTurn: null,
   demoTimer: null,
   demoRunning: false,
+  focusClickTimer: null,
   zoomOpen: false,
   zoomScale: 1
 };
@@ -249,18 +250,18 @@ fullscreenButton.addEventListener("click", async () => {
   if (!document.fullscreenElement) {
     await document.documentElement.requestFullscreen();
     document.body.classList.add("fullscreen-on");
-    fullscreenButton.textContent = "Exit Fullscreen";
+    fullscreenButton.textContent = "Exit";
   } else {
     await document.exitFullscreen();
     document.body.classList.remove("fullscreen-on");
-    fullscreenButton.textContent = "Fullscreen";
+    fullscreenButton.textContent = "Full";
   }
 });
 
 document.addEventListener("fullscreenchange", () => {
   const inFullscreen = Boolean(document.fullscreenElement);
   document.body.classList.toggle("fullscreen-on", inFullscreen);
-  fullscreenButton.textContent = inFullscreen ? "Exit Fullscreen" : "Fullscreen";
+  fullscreenButton.textContent = inFullscreen ? "Exit" : "Full";
 });
 
 document.addEventListener("keydown", (event) => {
@@ -385,7 +386,7 @@ function renderEmpty() {
   expandItemButton.disabled = true;
   openItemButton.disabled = true;
   demoButton.classList.remove("active-demo");
-  demoButton.textContent = "Auto Demo";
+  demoButton.textContent = "Demo";
   closeZoomView();
 }
 
@@ -399,20 +400,31 @@ function renderStage() {
   stageTitle.textContent = catalog.title;
   gestureHint.textContent = "Swipe the top card, single-click to focus it, double-click or use Expand to enlarge it, or use Previous / Next.";
   demoButton.classList.toggle("active-demo", state.demoRunning);
-  demoButton.textContent = state.demoRunning ? "Stop Demo" : "Auto Demo";
+  demoButton.textContent = state.demoRunning ? "Stop" : "Demo";
 
   const items = buildOrderedItems(catalog);
   stackLayer.innerHTML = items.map((item) => renderCard(catalog, item)).join("");
 
   const topCard = stackLayer.querySelector(".stack-card.top");
   if (topCard) {
-    topCard.addEventListener("click", () => {
+    topCard.addEventListener("click", (event) => {
       if (Date.now() < state.suppressCardClickUntil) return;
       stopDemo();
-      focusCurrentItem();
+      if (event.detail !== 1) return;
+      if (state.focusClickTimer) {
+        clearTimeout(state.focusClickTimer);
+      }
+      state.focusClickTimer = setTimeout(() => {
+        focusCurrentItem();
+        state.focusClickTimer = null;
+      }, 220);
     });
     topCard.addEventListener("dblclick", () => {
       stopDemo();
+      if (state.focusClickTimer) {
+        clearTimeout(state.focusClickTimer);
+        state.focusClickTimer = null;
+      }
       openZoomView();
     });
     attachGesture(topCard);
@@ -625,12 +637,6 @@ function attachGesture(card) {
 }
 
 function focusCurrentItem() {
-  const catalog = getActiveCatalog();
-  if (!catalog) return;
-
-  state.lastGesture = "Opened item";
-  renderStage();
-
   const topCard = stackLayer.querySelector(".stack-card.top");
   if (!topCard) return;
 

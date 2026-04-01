@@ -80,23 +80,18 @@ body::before {
   position: sticky;
   top: 12px;
   z-index: 80;
-  padding: 14px 18px;
+  padding: 10px 12px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
-.topbar h1,
 .panel-head h3,
 .dock-card h4,
 .stack-card h4 {
   margin: 0;
   font-family: "Syne", sans-serif;
-}
-
-.topbar h1 {
-  font-size: clamp(1.5rem, 2.2vw, 2.2rem);
 }
 
 .eyebrow {
@@ -112,7 +107,7 @@ body::before {
 .zoom-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .mode-pill,
@@ -127,7 +122,8 @@ body::before {
 
 .mode-pill,
 .panel-pill {
-  padding: 10px 14px;
+  padding: 7px 10px;
+  font-size: 0.8rem;
 }
 
 .mode-pill.active {
@@ -141,9 +137,9 @@ body::before {
 }
 
 .control-button {
-  padding: 9px 12px;
+  padding: 7px 10px;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -180,14 +176,33 @@ body::before {
 .panel-head {
   display: flex;
   justify-content: space-between;
-  align-items: start;
-  gap: 16px;
-  margin-bottom: 14px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .panel-head h3 {
-  margin-top: 6px;
-  font-size: 1.48rem;
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.stage-headline {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stage-headline .eyebrow {
+  white-space: nowrap;
+  font-size: 0.64rem;
+}
+
+.stage-headline h3 {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dock-list {
@@ -710,7 +725,7 @@ body::before {
   .control-button,
   .panel-pill,
   .detail-chip {
-    font-size: 0.92rem;
+    font-size: 0.82rem;
   }
 
   .dock-list {
