@@ -280,9 +280,7 @@ demoButton.addEventListener("click", () => {
 
 fullscreenButton.addEventListener("click", async () => {
   if (!document.fullscreenElement) {
-    await document.documentElement.requestFullscreen();
-    document.body.classList.add("fullscreen-on");
-    fullscreenButton.textContent = "Exit";
+    await enterFullscreenIfNeeded();
   } else {
     await document.exitFullscreen();
     document.body.classList.remove("fullscreen-on");
@@ -1119,10 +1117,23 @@ function getActiveItem() {
   return catalog.items[state.activeIndex] || null;
 }
 
-function openZoomView() {
+async function enterFullscreenIfNeeded() {
+  if (document.fullscreenElement) return true;
+  try {
+    await document.documentElement.requestFullscreen();
+    return true;
+  } catch (error) {
+    console.warn("Fullscreen request was blocked", error);
+    return false;
+  }
+}
+
+async function openZoomView() {
   state.zoomOpen = true;
   state.zoomScale = 1;
   state.lastGesture = "Expanded item";
+  renderStage();
+  await enterFullscreenIfNeeded();
   renderStage();
 }
 

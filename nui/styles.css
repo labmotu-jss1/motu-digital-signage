@@ -294,7 +294,7 @@ body::before {
 }
 
 .stage.expanded-mode {
-  min-height: calc(100vh - 110px);
+  min-height: calc(100vh - 74px);
 }
 
 .stack-layer {
@@ -438,7 +438,7 @@ body::before {
 
 .expanded-stage-card {
   width: min(1400px, calc(100vw - 48px));
-  height: min(calc(100vh - 125px), 1100px);
+  height: min(calc(100vh - 86px), 1180px);
   display: grid;
   place-items: center;
   padding: 0;
@@ -621,7 +621,10 @@ body::before {
 .preview-shell.text,
 .preview-shell.pdf {
   display: grid;
-  place-items: center;
+  grid-template-rows: auto 1fr auto;
+  align-items: stretch;
+  justify-items: center;
+  padding: 14px;
   background:
     linear-gradient(145deg, rgba(103, 239, 255, 0.12), rgba(255, 255, 255, 0.02)),
     rgba(7, 18, 31, 0.94);
@@ -629,10 +632,10 @@ body::before {
 }
 
 .asset-title {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
+  position: static;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 10px;
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.2;
@@ -642,12 +645,12 @@ body::before {
   text-overflow: ellipsis;
   white-space: nowrap;
   pointer-events: none;
+  align-self: end;
 }
 
 .asset-badge {
-  position: absolute;
-  top: 14px;
-  left: 14px;
+  position: static;
+  justify-self: start;
   padding: 6px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
@@ -1011,6 +1014,10 @@ body::before {
 
   .stage {
     min-height: 520px;
+  }
+
+  .stage.expanded-mode {
+    min-height: calc(100vh - 62px);
   }
 
   .stack-card {
