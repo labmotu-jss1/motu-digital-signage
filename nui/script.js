@@ -316,7 +316,6 @@ async function loadCatalogs() {
 function setLoadingState() {
   catalogCount.textContent = "Loading";
   stageTitle.textContent = "Loading catalog";
-  gestureHint.textContent = "Loading live library content from the Cloud VM...";
   expandItemButton.disabled = true;
   openItemButton.disabled = true;
 }
@@ -382,7 +381,6 @@ function canUseMode(catalog, mode) {
 
 function renderEmpty() {
   stageTitle.textContent = "Select a catalog";
-  gestureHint.textContent = "Tap a catalog on the left to begin, or use the sample stack that loads by default.";
   stackLayer.innerHTML = "";
   expandItemButton.disabled = true;
   openItemButton.disabled = true;
@@ -399,7 +397,6 @@ function renderStage() {
   }
 
   stageTitle.textContent = catalog.title;
-  gestureHint.textContent = "Swipe the top card, single-click to focus it, double-click or use Expand to enlarge it, or use Previous / Next.";
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop" : "Demo";
 
