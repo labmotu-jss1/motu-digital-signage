@@ -635,6 +635,20 @@ function getCubeFaceStyle(item) {
 }
 
 function buildOrderedItems(catalog) {
+  if (state.interactionMode === "carousel") {
+    const offsets = [-2, -1, 0, 1, 2, 3];
+    return offsets
+      .filter((offset, position, array) => position < catalog.items.length && array.indexOf(offset) === position)
+      .map((offset) => {
+        const index = (state.activeIndex + offset + catalog.items.length) % catalog.items.length;
+        return {
+          ...catalog.items[index],
+          index,
+          relative: offset
+        };
+      });
+  }
+
   return catalog.items
     .map((item, index) => ({
       ...item,
@@ -668,7 +682,7 @@ function renderCard(catalog, item) {
 
 function computeLayout(catalog, relative) {
   if (state.interactionMode === "carousel") {
-    const slot = Math.min(relative, 5);
+    const slot = Math.max(0, Math.min(relative + 2, 5));
     const xMap = [-340, -205, -58, 122, 292, 428];
     const yMap = [112, 46, 0, 24, 86, 156];
     const rotateMap = [-8, -4, 0, 3, 6, 9];
