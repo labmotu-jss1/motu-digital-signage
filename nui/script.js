@@ -150,6 +150,7 @@ const demoButton = document.getElementById("demoButton");
 const fanButton = document.getElementById("fanButton");
 const resetButton = document.getElementById("resetButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
+const openItemButton = document.getElementById("openItemButton");
 const telemetryCatalog = document.getElementById("telemetryCatalog");
 const telemetryIndex = document.getElementById("telemetryIndex");
 const telemetryGesture = document.getElementById("telemetryGesture");
@@ -197,6 +198,12 @@ resetButton.addEventListener("click", () => {
   renderDock();
   renderModes();
   renderEmpty();
+});
+
+openItemButton.addEventListener("click", () => {
+  if (!getActiveCatalog()) return;
+  stopDemo();
+  focusCurrentItem();
 });
 
 previousButton.addEventListener("click", () => {
@@ -313,6 +320,7 @@ function renderEmpty() {
   telemetryIndex.textContent = "0 / 0";
   telemetryGesture.textContent = state.lastGesture;
   telemetryMode.textContent = "Fan";
+  openItemButton.disabled = true;
   demoButton.classList.remove("active-demo");
   demoButton.textContent = "Auto Demo";
 }
@@ -335,6 +343,10 @@ function renderStage() {
 
   const topCard = stackLayer.querySelector(".stack-card.top");
   if (topCard) {
+    topCard.addEventListener("click", () => {
+      stopDemo();
+      focusCurrentItem();
+    });
     attachGesture(topCard);
   }
 
@@ -346,6 +358,7 @@ function renderStage() {
   telemetryIndex.textContent = `${state.activeIndex + 1} / ${catalog.items.length}`;
   telemetryGesture.textContent = state.lastGesture;
   telemetryMode.textContent = state.interactionMode;
+  openItemButton.disabled = false;
 }
 
 function buildOrderedItems(catalog) {
@@ -531,6 +544,22 @@ function attachGesture(card) {
       renderStage();
     }
   });
+}
+
+function focusCurrentItem() {
+  const catalog = getActiveCatalog();
+  if (!catalog) return;
+
+  state.lastGesture = "Opened item";
+  renderStage();
+
+  const topCard = stackLayer.querySelector(".stack-card.top");
+  if (!topCard) return;
+
+  topCard.classList.remove("focus-pop");
+  void topCard.offsetWidth;
+  topCard.classList.add("focus-pop");
+  topCard.scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
 function turnCatalog(direction) {

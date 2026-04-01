@@ -27,7 +27,9 @@ body {
     radial-gradient(circle at top left, rgba(103, 239, 255, 0.15), transparent 24%),
     radial-gradient(circle at 78% 12%, rgba(255, 203, 111, 0.16), transparent 18%),
     linear-gradient(140deg, var(--bg-1), var(--bg-2));
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body::before {
@@ -162,7 +164,7 @@ body::before {
 .hero-band h2 {
   margin-top: 8px;
   max-width: 15ch;
-  font-size: clamp(1.6rem, 2.8vw, 3rem);
+  font-size: clamp(1.35rem, 2.4vw, 2.4rem);
   line-height: 0.92;
 }
 
@@ -297,7 +299,7 @@ body::before {
   border-radius: 30px;
   border: 1px solid var(--line);
   overflow: hidden;
-  min-height: 0;
+  min-height: 520px;
   background:
     radial-gradient(circle at 18% 22%, rgba(175, 255, 155, 0.08), transparent 18%),
     radial-gradient(circle at 82% 18%, rgba(255, 160, 160, 0.08), transparent 16%),
@@ -341,7 +343,7 @@ body::before {
 .stack-card {
   position: absolute;
   width: min(440px, 34vw);
-  min-height: 420px;
+  min-height: 390px;
   padding: 20px;
   border-radius: 34px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -365,6 +367,10 @@ body::before {
   cursor: grabbing;
 }
 
+.stack-card.focus-pop {
+  animation: focus-pop 420ms ease;
+}
+
 .stack-card.binder {
   background:
     linear-gradient(145deg, rgba(255, 203, 111, 0.08), transparent 34%),
@@ -378,7 +384,7 @@ body::before {
 }
 
 .preview-shell {
-  height: 220px;
+  height: 196px;
   border-radius: 24px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -580,6 +586,20 @@ body::before {
   gap: 10px;
 }
 
+.detail-actions {
+  margin-top: 16px;
+}
+
+.detail-open-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.detail-open-button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
 .telemetry-row {
   min-height: 52px;
   padding: 12px 14px;
@@ -614,10 +634,19 @@ body::before {
   to { transform: rotateY(68deg); }
 }
 
+@keyframes focus-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
 @media (max-width: 1320px) {
   html,
   body {
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 
   .wall-app {
@@ -630,8 +659,8 @@ body::before {
   }
 
   .hero-band h2 {
-    max-width: 20ch;
-    font-size: clamp(1.5rem, 4vw, 2.4rem);
+    max-width: 22ch;
+    font-size: clamp(1.2rem, 3.2vw, 2rem);
   }
 
   .hero-band {
@@ -674,7 +703,12 @@ body::before {
   }
 
   .stack-card {
-    width: min(88vw, 460px);
+    width: min(84vw, 430px);
+    min-height: 360px;
+  }
+
+  .preview-shell {
+    height: 182px;
   }
 }
 
@@ -719,8 +753,8 @@ body::before {
   }
 
   .hero-band h2 {
-    font-size: clamp(1.35rem, 5vw, 2rem);
-    line-height: 1;
+    font-size: clamp(1.05rem, 4.2vw, 1.65rem);
+    line-height: 1.05;
   }
 
   .hero-band p {
@@ -745,20 +779,28 @@ body::before {
   }
 
   .stage {
-    min-height: 560px;
+    min-height: 440px;
   }
 
   .stack-card {
-    width: min(92vw, 380px);
-    min-height: 360px;
-    padding: 16px;
+    width: min(90vw, 330px);
+    min-height: 320px;
+    padding: 14px;
   }
 
   .preview-shell {
-    height: 180px;
+    height: 150px;
   }
 
   .detail-panel {
     padding-bottom: 24px;
+  }
+
+  .gesture-hint {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    max-width: none;
+    font-size: 0.92rem;
   }
 }
