@@ -584,9 +584,10 @@ function renderCubeStage(catalog) {
           <article
             class="cube-face ${faceClasses[faceIndex]} ${faceIndex === 0 ? "active" : ""}"
             data-index="${item.index}"
+            style="${getCubeFaceStyle(item)}"
           >
             <div class="cube-face-glow"></div>
-            ${renderCubeFacePreview(catalog, item)}
+            ${item.assetUrl ? "" : renderCubeFacePreview(catalog, item)}
           </article>
         `).join("")}
       </div>
@@ -611,15 +612,12 @@ function openCubeFace(index) {
 }
 
 function renderCubeFacePreview(catalog, item) {
-  if (item.assetUrl) {
-    return `
-      <div class="preview-shell asset cube-preview">
-        <img src="${item.assetUrl}" alt="${item.title}" loading="lazy" />
-      </div>
-    `;
-  }
-
   return renderPreview(catalog, item);
+}
+
+function getCubeFaceStyle(item) {
+  if (!item.assetUrl) return "";
+  return `background-image: linear-gradient(145deg, rgba(97, 231, 255, 0.1), rgba(4, 12, 22, 0.08)), url('${item.assetUrl}'); background-size: cover; background-position: center;`;
 }
 
 function buildOrderedItems(catalog) {
@@ -649,25 +647,21 @@ function renderCard(catalog, item) {
       style="transform:${layout.transform}; opacity:${layout.opacity}; z-index:${layout.zIndex};"
     >
       ${renderPreview(catalog, item)}
-      <h4>${item.title}</h4>
-      <p>${item.description}</p>
-      <div class="stack-meta">
-        ${item.meta.map((entry) => `<span>${entry}</span>`).join("")}
-      </div>
     </article>
   `;
 }
 
 function computeLayout(catalog, relative) {
   if (state.interactionMode === "carousel") {
-    const x = (relative * 132) - 88;
-    const y = Math.min(relative * 8, 24);
-    const rotate = (relative * 5) - 8;
-    const scale = Math.max(0.78, 1 - (relative * 0.08));
+    const slot = Math.min(relative, 5);
+    const xMap = [-220, -120, -15, 110, 220, 305];
+    const yMap = [36, 12, 0, 18, 48, 84];
+    const rotateMap = [-18, -10, -3, 7, 15, 22];
+    const scaleMap = [0.74, 0.84, 1, 0.9, 0.8, 0.68];
     return {
-      transform: `translateX(${x}px) translateY(${y}px) rotate(${rotate}deg) scale(${scale})`,
-      opacity: Math.max(0.26, 1 - (relative * 0.14)),
-      zIndex: 100 - relative
+      transform: `translateX(${xMap[slot]}px) translateY(${yMap[slot]}px) rotate(${rotateMap[slot]}deg) scale(${scaleMap[slot]})`,
+      opacity: [0.52, 0.74, 1, 0.86, 0.66, 0.42][slot],
+      zIndex: 100 - slot
     };
   }
 
