@@ -227,6 +227,10 @@ expandItemButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
   playUiSound("expand");
+  if (state.zoomOpen) {
+    closeZoomView();
+    return;
+  }
   openZoomView();
 });
 
@@ -253,6 +257,10 @@ previousButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
   playUiSound("swipe");
+  if (state.zoomOpen) {
+    stepZoomItem(-1);
+    return;
+  }
   turnCatalog(-1);
 });
 
@@ -260,6 +268,10 @@ nextButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
   playUiSound("swipe");
+  if (state.zoomOpen) {
+    stepZoomItem(1);
+    return;
+  }
   turnCatalog(1);
 });
 
@@ -524,6 +536,7 @@ function renderEmpty() {
   demoButton.classList.remove("active-demo");
   demoButton.textContent = "Demo";
   fanButton.textContent = "Fan";
+  expandItemButton.textContent = "Expand";
   closeZoomView();
 }
 
@@ -538,14 +551,23 @@ function renderStage() {
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop" : "Demo";
   fanButton.disabled = false;
-  previousButton.disabled = false;
-  nextButton.disabled = false;
+  previousButton.disabled = state.zoomOpen ? state.activeIndex <= 0 : false;
+  nextButton.disabled = state.zoomOpen ? state.activeIndex >= catalog.items.length - 1 : false;
   fanButton.textContent = state.interactionMode === "fan" ? "Spin" : "Fan";
+  expandItemButton.textContent = state.zoomOpen ? "Close" : "Expand";
 
   if (state.interactionMode === "cube") {
     renderCubeStage(catalog);
     expandItemButton.disabled = true;
     openItemButton.disabled = true;
+    renderZoomView();
+    return;
+  }
+
+  if (state.zoomOpen) {
+    renderExpandedStage(catalog);
+    expandItemButton.disabled = false;
+    openItemButton.disabled = false;
     renderZoomView();
     return;
   }
@@ -623,6 +645,33 @@ function renderCubeStage(catalog) {
   const scene = document.getElementById("cubeScene");
   const cube = document.getElementById("catalogCube");
   attachCubeInteraction(scene, cube);
+}
+
+function renderExpandedStage(catalog) {
+  const activeItem = getActiveItem();
+  stageTitle.textContent = activeItem?.title || catalog.title;
+
+  if (!activeItem) {
+    stackLayer.innerHTML = "";
+    return;
+  }
+
+  if (activeItem.assetUrl) {
+    stackLayer.innerHTML = `
+      <article class="expanded-stage-card">
+        <div class="expanded-stage-media">
+          <img src="${activeItem.assetUrl}" alt="${activeItem.title}" class="expanded-stage-image" />
+        </div>
+      </article>
+    `;
+    return;
+  }
+
+  stackLayer.innerHTML = `
+    <article class="expanded-stage-card fallback">
+      ${renderPreview(catalog, activeItem)}
+    </article>
+  `;
 }
 
 function openCubeFace(index) {
@@ -964,23 +1013,16 @@ function getActiveItem() {
 }
 
 function openZoomView() {
-  const activeItem = getActiveItem();
-  if (!activeItem?.assetUrl) {
-    focusCurrentItem();
-    return;
-  }
-
   state.zoomOpen = true;
   state.zoomScale = 1;
   state.lastGesture = "Expanded item";
-  renderZoomView();
   renderStage();
 }
 
 function closeZoomView() {
   state.zoomOpen = false;
   state.zoomScale = 1;
-  renderZoomView();
+  renderStage();
 }
 
 function stepZoomItem(direction) {
@@ -993,7 +1035,6 @@ function stepZoomItem(direction) {
   state.activeIndex = nextIndex;
   state.zoomScale = 1;
   state.lastGesture = direction > 0 ? "Zoom next" : "Zoom previous";
-  renderZoomView();
   renderStage();
 }
 
@@ -1013,30 +1054,47 @@ function goHomeFromZoom() {
 function adjustZoom(delta) {
   if (!state.zoomOpen) return;
   state.zoomScale = Math.min(3, Math.max(1, state.zoomScale + delta));
+  const image = stackLayer.querySelector(".expanded-stage-image");
+  if (image) {
+    image.style.transform = `scale(${state.zoomScale})`;
+  }
   renderZoomView();
 }
 
 function renderZoomView() {
   const activeItem = getActiveItem();
-  const canZoom = Boolean(state.zoomOpen && activeItem?.assetUrl);
+  const canZoom = Boolean(state.zoomOpen);
+  const hasAsset = Boolean(activeItem?.assetUrl);
 
-  zoomOverlay.hidden = !canZoom;
-  document.body.classList.toggle("zoom-open", canZoom);
+  zoomOverlay.hidden = true;
+  document.body.classList.toggle("zoom-open", false);
 
   if (!canZoom) {
     zoomImage.removeAttribute("src");
     zoomImage.style.transform = "scale(1)";
+    zoomPreviousButton.disabled = true;
+    zoomNextButton.disabled = true;
+    zoomOutButton.disabled = true;
+    zoomInButton.disabled = true;
     return;
   }
 
   zoomTitle.textContent = activeItem.title;
-  zoomImage.src = activeItem.assetUrl;
-  zoomImage.alt = activeItem.title;
+  if (hasAsset) {
+    zoomImage.src = activeItem.assetUrl;
+    zoomImage.alt = activeItem.title;
+  } else {
+    zoomImage.removeAttribute("src");
+  }
   zoomImage.style.transform = `scale(${state.zoomScale})`;
+  const stageImage = stackLayer.querySelector(".expanded-stage-image");
+  if (stageImage) {
+    stageImage.style.transform = `scale(${state.zoomScale})`;
+  }
   zoomPreviousButton.disabled = state.activeIndex <= 0;
   zoomNextButton.disabled = state.activeIndex >= getActiveCatalog().items.length - 1;
-  zoomOutButton.disabled = state.zoomScale <= 1;
-  zoomInButton.disabled = state.zoomScale >= 3;
+  zoomOutButton.disabled = !hasAsset || state.zoomScale <= 1;
+  zoomInButton.disabled = !hasAsset || state.zoomScale >= 3;
 }
 
 function openCurrentItem() {
