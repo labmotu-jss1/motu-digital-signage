@@ -541,18 +541,33 @@ function renderStage() {
   const items = buildOrderedItems(catalog);
   stackLayer.innerHTML = items.map((item) => renderCard(catalog, item)).join("");
 
-  const topCard = stackLayer.querySelector(".stack-card.top");
-  if (topCard) {
-    topCard.addEventListener("click", (event) => {
+  stackLayer.querySelectorAll(".stack-card").forEach((card) => {
+    card.addEventListener("click", () => {
       if (Date.now() < state.suppressCardClickUntil) return;
-      if (event.detail !== 2) return;
+
+      const cardIndex = Number(card.dataset.index);
       stopDemo();
+
+      if (cardIndex === state.activeIndex) {
+        playUiSound("expand");
+        openZoomView();
+        return;
+      }
+
       if (state.focusClickTimer) {
         clearTimeout(state.focusClickTimer);
         state.focusClickTimer = null;
       }
-      openZoomView();
+
+      playUiSound("select");
+      state.activeIndex = cardIndex;
+      state.lastGesture = "Selected item";
+      renderStage();
     });
+  });
+
+  const topCard = stackLayer.querySelector(".stack-card.top");
+  if (topCard) {
     attachGesture(topCard);
   }
 
@@ -635,6 +650,7 @@ function renderCard(catalog, item) {
   const classes = [
     "stack-card",
     item.relative === 0 ? "top" : "",
+    state.interactionMode === "carousel" ? "carousel-card" : "",
     catalog.mode === "binder" ? "binder" : "",
     catalog.mode === "carousel" && catalog.id !== "media-gallery" ? "folder" : ""
   ].filter(Boolean).join(" ");
@@ -653,12 +669,13 @@ function renderCard(catalog, item) {
 function computeLayout(catalog, relative) {
   if (state.interactionMode === "carousel") {
     const slot = Math.min(relative, 5);
-    const xMap = [-300, -180, -48, 102, 246, 372];
+    const xMap = [-340, -205, -58, 122, 292, 428];
     const yMap = [112, 46, 0, 24, 86, 156];
-    const rotateMap = [-28, -17, -5, 9, 20, 30];
+    const rotateMap = [-8, -4, 0, 3, 6, 9];
+    const yawMap = [48, 30, 0, -24, -42, -54];
     const scaleMap = [0.62, 0.76, 1.08, 0.92, 0.72, 0.52];
     return {
-      transform: `translateX(${xMap[slot]}px) translateY(${yMap[slot]}px) rotate(${rotateMap[slot]}deg) scale(${scaleMap[slot]})`,
+      transform: `translateX(${xMap[slot]}px) translateY(${yMap[slot]}px) rotateY(${yawMap[slot]}deg) rotate(${rotateMap[slot]}deg) scale(${scaleMap[slot]})`,
       opacity: [0.24, 0.52, 1, 0.82, 0.5, 0.22][slot],
       zIndex: 100 - slot
     };
@@ -676,13 +693,13 @@ function computeLayout(catalog, relative) {
     };
   }
 
-  const x = (relative * 54) - 86;
-  const y = relative * 14;
-  const rotate = (relative * 9) - 15;
-  const scale = Math.max(0.76, 1 - (relative * 0.07));
+  const x = (relative * 82) - 132;
+  const y = relative * 12;
+  const rotate = (relative * 10) - 17;
+  const scale = Math.max(0.74, 1 - (relative * 0.065));
   return {
     transform: `translateX(${x}px) translateY(${y}px) rotate(${rotate}deg) scale(${scale})`,
-    opacity: Math.max(0.22, 1 - (relative * 0.16)),
+    opacity: Math.max(0.28, 1 - (relative * 0.14)),
     zIndex: 100 - relative
   };
 }
