@@ -154,6 +154,12 @@ const fanButton = document.getElementById("fanButton");
 const resetButton = document.getElementById("resetButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
 const openItemButton = document.getElementById("openItemButton");
+const zoomOverlay = document.getElementById("zoomOverlay");
+const zoomTitle = document.getElementById("zoomTitle");
+const zoomImage = document.getElementById("zoomImage");
+const zoomInButton = document.getElementById("zoomInButton");
+const zoomOutButton = document.getElementById("zoomOutButton");
+const zoomCloseButton = document.getElementById("zoomCloseButton");
 const telemetryCatalog = document.getElementById("telemetryCatalog");
 const telemetryIndex = document.getElementById("telemetryIndex");
 const telemetryGesture = document.getElementById("telemetryGesture");
@@ -172,10 +178,13 @@ const state = {
   fanOpen: true,
   interactionMode: "fan",
   pointer: null,
+  suppressCardClickUntil: 0,
   lastGesture: "Waiting",
   pendingBinderTurn: null,
   demoTimer: null,
-  demoRunning: false
+  demoRunning: false,
+  zoomOpen: false,
+  zoomScale: 1
 };
 
 setLoadingState();
@@ -205,6 +214,15 @@ openItemButton.addEventListener("click", () => {
   if (!getActiveCatalog()) return;
   stopDemo();
   openCurrentItem();
+});
+
+zoomInButton.addEventListener("click", () => adjustZoom(0.25));
+zoomOutButton.addEventListener("click", () => adjustZoom(-0.25));
+zoomCloseButton.addEventListener("click", closeZoomView);
+zoomOverlay.addEventListener("click", (event) => {
+  if (event.target === zoomOverlay || event.target.classList.contains("zoom-backdrop")) {
+    closeZoomView();
+  }
 });
 
 previousButton.addEventListener("click", () => {
@@ -244,6 +262,17 @@ document.addEventListener("fullscreenchange", () => {
   const inFullscreen = Boolean(document.fullscreenElement);
   document.body.classList.toggle("fullscreen-on", inFullscreen);
   fullscreenButton.textContent = inFullscreen ? "Exit Fullscreen" : "Fullscreen";
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!state.zoomOpen) return;
+  if (event.key === "Escape") {
+    closeZoomView();
+  } else if (event.key === "+" || event.key === "=") {
+    adjustZoom(0.25);
+  } else if (event.key === "-") {
+    adjustZoom(-0.25);
+  }
 });
 
 function getActiveCatalog() {
@@ -372,6 +401,7 @@ function renderEmpty() {
   openItemButton.disabled = true;
   demoButton.classList.remove("active-demo");
   demoButton.textContent = "Auto Demo";
+  closeZoomView();
 }
 
 function renderStage() {
@@ -383,7 +413,7 @@ function renderStage() {
 
   stageTitle.textContent = catalog.title;
   detailBadge.textContent = catalog.badge;
-  gestureHint.textContent = "Swipe the top card, use Previous / Next, or start Auto Demo to see the wall behavior immediately.";
+  gestureHint.textContent = "Swipe the top card, tap it to expand, use Previous / Next, or start Auto Demo to see the wall behavior immediately.";
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop Demo" : "Auto Demo";
 
@@ -393,8 +423,13 @@ function renderStage() {
   const topCard = stackLayer.querySelector(".stack-card.top");
   if (topCard) {
     topCard.addEventListener("click", () => {
+      if (Date.now() < state.suppressCardClickUntil) return;
       stopDemo();
-      openCurrentItem();
+      openZoomView();
+    });
+    topCard.addEventListener("dblclick", () => {
+      stopDemo();
+      openZoomView();
     });
     attachGesture(topCard);
   }
@@ -408,6 +443,7 @@ function renderStage() {
   telemetryGesture.textContent = state.lastGesture;
   telemetryMode.textContent = state.interactionMode;
   openItemButton.disabled = false;
+  renderZoomView();
 }
 
 function buildOrderedItems(catalog) {
@@ -544,7 +580,8 @@ function attachGesture(card) {
       lastY: event.clientY,
       lastTime: performance.now(),
       velocityX: 0,
-      velocityY: 0
+      velocityY: 0,
+      moved: false
     };
 
     card.classList.add("dragging");
@@ -563,6 +600,9 @@ function attachGesture(card) {
     state.pointer.lastX = event.clientX;
     state.pointer.lastY = event.clientY;
     state.pointer.lastTime = now;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+      state.pointer.moved = true;
+    }
 
     const rotate = dx / 18;
     card.style.transform = `translateX(${dx}px) translateY(${dy}px) rotate(${rotate}deg) scale(1.02)`;
@@ -576,6 +616,9 @@ function attachGesture(card) {
     const flingUp = dy < -gestureConfig.flingDistance || state.pointer.velocityY < -gestureConfig.velocityThreshold;
     const swipeLeft = dx < -gestureConfig.swipeDistance || state.pointer.velocityX < -gestureConfig.velocityThreshold;
     const swipeRight = dx > gestureConfig.swipeDistance || state.pointer.velocityX > gestureConfig.velocityThreshold;
+    if (state.pointer.moved) {
+      state.suppressCardClickUntil = Date.now() + 250;
+    }
 
     card.classList.remove("dragging");
 
@@ -618,6 +661,59 @@ function focusCurrentItem() {
   void topCard.offsetWidth;
   topCard.classList.add("focus-pop");
   topCard.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+function getActiveItem() {
+  const catalog = getActiveCatalog();
+  if (!catalog) return null;
+  return catalog.items[state.activeIndex] || null;
+}
+
+function openZoomView() {
+  const activeItem = getActiveItem();
+  if (!activeItem?.assetUrl) {
+    focusCurrentItem();
+    return;
+  }
+
+  state.zoomOpen = true;
+  state.zoomScale = 1;
+  state.lastGesture = "Expanded item";
+  renderZoomView();
+  renderStage();
+}
+
+function closeZoomView() {
+  state.zoomOpen = false;
+  state.zoomScale = 1;
+  renderZoomView();
+}
+
+function adjustZoom(delta) {
+  if (!state.zoomOpen) return;
+  state.zoomScale = Math.min(3, Math.max(1, state.zoomScale + delta));
+  renderZoomView();
+}
+
+function renderZoomView() {
+  const activeItem = getActiveItem();
+  const canZoom = Boolean(state.zoomOpen && activeItem?.assetUrl);
+
+  zoomOverlay.hidden = !canZoom;
+  document.body.classList.toggle("zoom-open", canZoom);
+
+  if (!canZoom) {
+    zoomImage.removeAttribute("src");
+    zoomImage.style.transform = "scale(1)";
+    return;
+  }
+
+  zoomTitle.textContent = activeItem.title;
+  zoomImage.src = activeItem.assetUrl;
+  zoomImage.alt = activeItem.title;
+  zoomImage.style.transform = `scale(${state.zoomScale})`;
+  zoomOutButton.disabled = state.zoomScale <= 1;
+  zoomInButton.disabled = state.zoomScale >= 3;
 }
 
 function openCurrentItem() {
