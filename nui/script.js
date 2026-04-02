@@ -143,12 +143,13 @@ const dock = document.getElementById("dock");
 const stackLayer = document.getElementById("stackLayer");
 const stageTitle = document.getElementById("stageTitle");
 const gestureHint = document.getElementById("gestureHint");
-const modePills = document.getElementById("modePills");
 const previousButton = document.getElementById("previousButton");
 const nextButton = document.getElementById("nextButton");
 const demoButton = document.getElementById("demoButton");
 const homeButton = document.getElementById("homeButton");
+const cubeButton = document.getElementById("cubeButton");
 const fanButton = document.getElementById("fanButton");
+const spinButton = document.getElementById("spinButton");
 const resetButton = document.getElementById("resetButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
 const expandItemButton = document.getElementById("expandItemButton");
@@ -200,22 +201,20 @@ setLoadingState();
 void init();
 
 fanButton.addEventListener("click", () => {
-  if (!getActiveCatalog()) return;
-  playUiSound("select");
-  if (state.interactionMode === "fan") {
-    state.interactionMode = "carousel";
-    state.fanOpen = false;
-  } else {
-    state.interactionMode = "fan";
-    state.fanOpen = true;
-  }
-  renderModes();
-  renderStage();
+  setInteractionMode("fan");
 });
 
 homeButton.addEventListener("click", () => {
   playUiSound("return");
   goHome();
+});
+
+cubeButton.addEventListener("click", () => {
+  setInteractionMode("cube");
+});
+
+spinButton.addEventListener("click", () => {
+  setInteractionMode("carousel");
 });
 
 resetButton.addEventListener("click", () => {
@@ -522,34 +521,15 @@ function renderDock() {
 
 function renderModes() {
   const catalog = getActiveCatalog();
-  const modes = [
-    { id: "fan", label: "Fan" },
-    { id: "carousel", label: "Spin" },
-    { id: "cube", label: "Cube" }
-  ];
-
-  modePills.innerHTML = modes.map((mode) => `
-    <button
-      type="button"
-      class="mode-pill ${state.interactionMode === mode.id ? "active" : ""}"
-      data-mode="${mode.id}"
-      ${catalog && canUseMode(catalog, mode.id) ? "" : "disabled"}
-    >
-      ${mode.label}
-    </button>
-  `).join("");
-
-  modePills.querySelectorAll(".mode-pill").forEach((pill) => {
-    pill.addEventListener("click", () => {
-      if (!catalog || !canUseMode(catalog, pill.dataset.mode)) return;
-      stopDemo();
-      playUiSound("select");
-      state.interactionMode = pill.dataset.mode;
-      state.fanOpen = pill.dataset.mode !== "carousel";
-      state.lastGesture = `Mode: ${pill.dataset.mode}`;
-      renderModes();
-      renderStage();
-    });
+  [
+    { element: cubeButton, mode: "cube" },
+    { element: fanButton, mode: "fan" },
+    { element: spinButton, mode: "carousel" }
+  ].forEach(({ element, mode }) => {
+    if (!element) return;
+    const enabled = Boolean(catalog && canUseMode(catalog, mode));
+    element.disabled = !enabled;
+    element.classList.toggle("mode-active", enabled && state.interactionMode === mode);
   });
 }
 
@@ -567,15 +547,25 @@ function renderEmpty() {
   expandItemButton.disabled = true;
   previousButton.disabled = true;
   nextButton.disabled = true;
-  fanButton.disabled = true;
   demoButton.classList.remove("active-demo");
   demoButton.textContent = "Demo";
-  fanButton.textContent = "Fan";
   expandItemButton.textContent = "Expand";
   zoomOverlay.hidden = true;
   document.body.classList.remove("zoom-open");
   renderDock();
   renderModes();
+}
+
+function setInteractionMode(mode) {
+  const catalog = getActiveCatalog();
+  if (!catalog || !canUseMode(catalog, mode)) return;
+  stopDemo();
+  playUiSound("select");
+  state.interactionMode = mode;
+  state.fanOpen = mode !== "carousel";
+  state.lastGesture = `Mode: ${mode}`;
+  renderModes();
+  renderStage();
 }
 
 function renderStage() {
@@ -591,10 +581,8 @@ function renderStage() {
   stageTitle.textContent = catalog.title;
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop" : "Demo";
-  fanButton.disabled = false;
   previousButton.disabled = state.zoomOpen ? state.activeIndex <= 0 : false;
   nextButton.disabled = state.zoomOpen ? state.activeIndex >= catalog.items.length - 1 : false;
-  fanButton.textContent = state.interactionMode === "fan" ? "Spin" : "Fan";
   expandItemButton.textContent = state.zoomOpen ? "Close" : "Expand";
 
   if (state.interactionMode === "cube") {
