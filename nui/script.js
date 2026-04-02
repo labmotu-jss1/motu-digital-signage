@@ -192,6 +192,7 @@ const state = {
   carouselTiltX: 17,
   carouselTargetTiltX: 17,
   carouselAnimationFrame: null,
+  carouselDrag: null,
   cubeRotationX: -18,
   cubeRotationY: 24,
   cubePointer: null,
@@ -774,24 +775,54 @@ function renderCarouselStage(catalog) {
       const rect = stage.getBoundingClientRect();
       const ratioY = rect.height ? ((event.clientY - rect.top) / rect.height) : 0.5;
       state.carouselTargetTiltX = 9 + (ratioY * 24);
+      if (state.carouselDrag?.id === event.pointerId) {
+        const deltaX = event.clientX - state.carouselDrag.lastX;
+        state.carouselTargetAngle = normalizeOrbitAngle(
+          state.carouselTargetAngle - (deltaX * 0.0048)
+        );
+        state.carouselDrag.lastX = event.clientX;
+        state.carouselDrag.moved = state.carouselDrag.moved || Math.abs(event.clientX - state.carouselDrag.startX) > 6;
+        syncActiveIndexFromAngle(catalog.items.length);
+      }
       ensureCarouselAnimation(catalog, ring);
     });
 
+    stage?.addEventListener("pointerdown", (event) => {
+      state.carouselDrag = {
+        id: event.pointerId,
+        startX: event.clientX,
+        lastX: event.clientX,
+        moved: false
+      };
+      stage.setPointerCapture?.(event.pointerId);
+      stage.classList.add("dragging");
+    });
+
+    stage?.addEventListener("pointerup", (event) => {
+      if (state.carouselDrag?.id === event.pointerId && state.carouselDrag.moved) {
+        state.suppressCardClickUntil = Date.now() + 180;
+      }
+      if (state.carouselDrag?.id === event.pointerId) {
+        stage.releasePointerCapture?.(event.pointerId);
+        state.carouselDrag = null;
+        stage.classList.remove("dragging");
+      }
+    });
+
+    stage?.addEventListener("pointercancel", (event) => {
+      if (state.carouselDrag?.id !== event.pointerId) return;
+      stage.releasePointerCapture?.(event.pointerId);
+      state.carouselDrag = null;
+      stage.classList.remove("dragging");
+    });
+
     stage?.addEventListener("pointerleave", () => {
+      if (state.carouselDrag) return;
       state.carouselTargetTiltX = 17;
       ensureCarouselAnimation(catalog, ring);
     });
 
     ring?.querySelectorAll(".carousel-ring-card").forEach((card) => {
-      card.addEventListener("mouseenter", () => {
-        const cardIndex = Number(card.dataset.index);
-        if (cardIndex === state.activeIndex) return;
-        stopDemo();
-        focusCarouselIndex(cardIndex, catalog.items.length);
-        state.lastGesture = "Hovered item";
-        ensureCarouselAnimation(catalog, ring);
-      });
-
       card.addEventListener("click", () => {
         if (Date.now() < state.suppressCardClickUntil) return;
         const cardIndex = Number(card.dataset.index);
