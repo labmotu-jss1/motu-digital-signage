@@ -135,12 +135,73 @@ const fallbackCatalogs = [
   }
 ];
 
+const historyBroadcastCatalog = {
+  id: "history-broadcast-cube",
+  title: "History Broadcast Cube",
+  mode: "fan",
+  badge: "Wikimedia Demo · 6",
+  description: "Prototype rotating history cube with live speech footage mapped onto persistent cube faces.",
+  accent: "amber",
+  items: [
+    {
+      title: "Martin Luther King Jr.",
+      description: "Prototype live speech face using Wikimedia Commons footage of Martin Luther King Jr. speaking in 1964.",
+      meta: ["Wikimedia Commons", "video", "prototype"],
+      preview: "media",
+      assetType: "video",
+      assetUrl: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Bezoek_ds_Martin_Luther_King.ogv",
+      posterUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Martin_Luther_King_-_I_Have_a_Dream.jpg",
+      sourceLabel: "MLK footage"
+    },
+    {
+      title: "John F. Kennedy",
+      description: "Full inauguration speech footage from Wikimedia Commons, including the 'ask not' passage.",
+      meta: ["Wikimedia Commons", "video", "public domain"],
+      preview: "media",
+      assetType: "video",
+      assetUrl: "https://upload.wikimedia.org/wikipedia/commons/7/74/John_F._Kennedy_Inauguration_Speech.ogv",
+      posterUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f3/PX_65-108-CC18280.jpg",
+      sourceLabel: "JFK address"
+    },
+    {
+      title: "March on Washington",
+      description: "A still face for the cube sourced from Wikimedia Commons to anchor the MLK side visually.",
+      meta: ["Wikimedia Commons", "image", "1963"],
+      preview: "media",
+      assetType: "image",
+      assetUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Martin_Luther_King_-_I_Have_a_Dream.jpg"
+    },
+    {
+      title: "Inaugural Moment",
+      description: "A still face for the JFK side sourced from Wikimedia Commons.",
+      meta: ["Wikimedia Commons", "image", "1961"],
+      preview: "media",
+      assetType: "image",
+      assetUrl: "https://upload.wikimedia.org/wikipedia/commons/5/57/Arlington_Kennedy_Inaugural_Address.JPG"
+    },
+    {
+      title: "Speech Notes",
+      description: "Use this face for transcript overlays, prompts, or later Wikipedia summaries pulled into the cube.",
+      meta: ["text", "planning", "face"],
+      preview: "binder"
+    },
+    {
+      title: "Source Rail",
+      description: "Reserve this face for citations, article excerpts, or other live feed metadata.",
+      meta: ["sources", "wiki", "live"],
+      preview: "folder",
+      tree: ["Wikimedia", "Wikipedia", "Live Sources"]
+    }
+  ]
+};
+
 let catalogs = [];
 const remoteCatalogsUrl = "https://40-160-254-60.sslip.io/motu-lib/catalogs.json";
 const catalogRefreshMs = 15000;
 const viewParams = new URLSearchParams(window.location.search);
 const forcedView = viewParams.get("view");
 const diceDemoVariant = viewParams.get("diceDemo") || "css";
+const demoMode = viewParams.get("demo");
 const isForcedMobileView = forcedView === "mobile";
 const isForcedDesktopView = forcedView === "desktop";
 const userAgent = navigator.userAgent || "";
@@ -479,14 +540,22 @@ async function loadCatalogs() {
 
     const payload = await response.json();
     if (!Array.isArray(payload) || payload.length === 0) {
-      return fallbackCatalogs;
+      return withInjectedCatalogs(fallbackCatalogs);
     }
 
-    return payload;
+    return withInjectedCatalogs(payload);
   } catch (error) {
     console.warn("Falling back to bundled sample catalogs.", error);
-    return fallbackCatalogs;
+    return withInjectedCatalogs(fallbackCatalogs);
   }
+}
+
+function withInjectedCatalogs(nextCatalogs) {
+  const baseCatalogs = Array.isArray(nextCatalogs) ? [...nextCatalogs] : [];
+  if (demoMode === "history-cube") {
+    baseCatalogs.unshift(historyBroadcastCatalog);
+  }
+  return baseCatalogs;
 }
 
 function setLoadingState() {
@@ -734,7 +803,34 @@ function renderCubeFacePreview(catalog, item, faceIndex) {
   if (isDiceCatalog(catalog)) {
     return renderDiceFace(catalog, item, faceIndex);
   }
+  if (item.assetUrl && getAssetType(item) === "video") {
+    return renderCubeVideoFace(item);
+  }
   return renderPreview(catalog, item);
+}
+
+function renderCubeVideoFace(item) {
+  const poster = item.posterUrl ? ` poster="${item.posterUrl}"` : "";
+  const sourceLabel = item.sourceLabel || "Live video";
+
+  return `
+    <div class="cube-video-shell">
+      <video
+        class="cube-face-video"
+        src="${item.assetUrl}"
+        autoplay
+        muted
+        loop
+        playsinline
+        webkit-playsinline="true"
+        preload="metadata"${poster}
+      ></video>
+      <div class="cube-video-overlay">
+        <span class="cube-video-pill">${sourceLabel}</span>
+        <strong>${item.title}</strong>
+      </div>
+    </div>
+  `;
 }
 
 function getCubeFaceStyle(item) {
