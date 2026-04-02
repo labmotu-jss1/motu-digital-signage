@@ -853,6 +853,7 @@ body.iphone-webkit .cube-face.bottom { transform: rotateX(-89.6deg) translateZ(c
 .live-carousel-video {
   padding: 0;
   background: #020811;
+  pointer-events: none;
 }
 
 .carousel-card-video {
@@ -861,6 +862,7 @@ body.iphone-webkit .cube-face.bottom { transform: rotateX(-89.6deg) translateZ(c
   display: block;
   object-fit: cover;
   filter: saturate(1.03) contrast(1.04);
+  pointer-events: none;
 }
 
 .carousel-video-sheen {

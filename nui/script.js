@@ -1929,8 +1929,20 @@ function activateCatalog(catalogId, gestureLabel) {
 
 function goHome() {
   stopDemo();
+  closeZoomView();
+  resetCubeMotion();
+  state.activeIndex = 0;
+  state.carouselAngle = 0;
+  state.carouselTargetAngle = 0;
+  state.carouselTiltX = 17;
+  state.carouselTargetTiltX = 17;
+  state.fanOpen = false;
+  state.pendingBinderTurn = null;
+  state.interactionMode = "cube";
   state.lastGesture = "Home refresh";
-  window.location.reload();
+  renderDock();
+  renderModes();
+  renderStage();
 }
 
 function syncViewToggleButton() {
