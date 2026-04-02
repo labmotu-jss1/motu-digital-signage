@@ -185,7 +185,6 @@ const soundState = {
 
 const state = {
   activeCatalogId: null,
-  selectedCatalogIds: [],
   activeIndex: 0,
   fanOpen: true,
   interactionMode: "fan",
@@ -451,12 +450,6 @@ function getActiveCatalog() {
   return catalogs.find((catalog) => catalog.id === state.activeCatalogId) || null;
 }
 
-function getSelectedCatalogs() {
-  return state.selectedCatalogIds
-    .map((catalogId) => catalogs.find((catalog) => catalog.id === catalogId))
-    .filter(Boolean);
-}
-
 async function init() {
   catalogs = await loadCatalogs();
   catalogCount.textContent = `${catalogs.length} Catalogs`;
@@ -565,7 +558,6 @@ async function refreshCatalogs() {
 
   const currentId = state.activeCatalogId;
   catalogs = nextCatalogs;
-  state.selectedCatalogIds = state.selectedCatalogIds.filter((catalogId) => catalogs.some((catalog) => catalog.id === catalogId));
   catalogCount.textContent = `${catalogs.length} Catalogs`;
 
   if (!currentId || !catalogs.some((catalog) => catalog.id === currentId)) {
@@ -584,9 +576,9 @@ async function refreshCatalogs() {
 
 function renderDock() {
   dock.innerHTML = catalogs.map((catalog) => `
-    <article class="dock-card ${state.activeCatalogId === catalog.id ? "active" : ""} ${state.selectedCatalogIds.includes(catalog.id) ? "multi-selected" : ""}" data-catalog-id="${catalog.id}">
+    <article class="dock-card ${state.activeCatalogId === catalog.id ? "active" : ""}" data-catalog-id="${catalog.id}">
       <label class="dock-check">
-        <input class="dock-check-input" type="checkbox" ${state.selectedCatalogIds.includes(catalog.id) ? "checked" : ""} />
+        <input class="dock-check-input" type="radio" ${state.activeCatalogId === catalog.id ? "checked" : ""} />
         <span class="dock-check-indicator" aria-hidden="true"></span>
       </label>
       <h4>${catalog.title}</h4>
@@ -594,52 +586,12 @@ function renderDock() {
   `).join("");
 
   dock.querySelectorAll(".dock-card").forEach((card) => {
-    const checkShell = card.querySelector(".dock-check");
-    const checkbox = card.querySelector(".dock-check-input");
-    checkShell?.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
-    checkbox?.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
-    checkbox?.addEventListener("change", (event) => {
-      stopDemo();
-      playUiSound("select");
-      setCatalogSelected(card.dataset.catalogId, event.target.checked);
-    });
     card.addEventListener("click", () => {
       stopDemo();
       playUiSound("select");
       activateCatalog(card.dataset.catalogId, "Pulled from wall");
     });
   });
-}
-
-function setCatalogSelected(catalogId, selected) {
-  if (selected) {
-    if (!state.selectedCatalogIds.includes(catalogId)) {
-      state.selectedCatalogIds = [...state.selectedCatalogIds, catalogId];
-    }
-    if (!state.activeCatalogId) {
-      state.activeCatalogId = catalogId;
-    }
-  } else {
-    if (state.selectedCatalogIds.length <= 1 && state.selectedCatalogIds.includes(catalogId)) {
-      state.selectedCatalogIds = [catalogId];
-    } else {
-      state.selectedCatalogIds = state.selectedCatalogIds.filter((id) => id !== catalogId);
-    }
-    if (!state.selectedCatalogIds.includes(state.activeCatalogId)) {
-      state.activeCatalogId = state.selectedCatalogIds[0] || null;
-      state.activeIndex = 0;
-    }
-  }
-  if (state.selectedCatalogIds.length > 1 && state.interactionMode === "carousel") {
-    state.interactionMode = "cube";
-  }
-  renderDock();
-  renderModes();
-  renderStage();
 }
 
 function renderModes() {
@@ -662,7 +614,6 @@ function canUseMode(catalog, mode) {
 
 function renderEmpty() {
   state.activeCatalogId = null;
-  state.selectedCatalogIds = [];
   state.zoomOpen = false;
   state.zoomScale = 1;
   stageTitle.textContent = "Select a catalog";
@@ -694,7 +645,6 @@ function setInteractionMode(mode) {
 
 function renderStage() {
   const catalog = getActiveCatalog();
-  const selectedCatalogs = getSelectedCatalogs();
   if (!catalog) {
     renderEmpty();
     return;
@@ -709,24 +659,6 @@ function renderStage() {
   previousButton.disabled = state.zoomOpen ? state.activeIndex <= 0 : false;
   nextButton.disabled = state.zoomOpen ? state.activeIndex >= catalog.items.length - 1 : false;
   expandItemButton.textContent = state.zoomOpen ? "Close" : "Expand";
-
-  if (state.interactionMode === "cube" && !state.zoomOpen && selectedCatalogs.length > 1) {
-    renderCubeWallStage(selectedCatalogs);
-    expandItemButton.disabled = true;
-    previousButton.disabled = false;
-    nextButton.disabled = false;
-    renderZoomView();
-    return;
-  }
-
-  if (state.interactionMode === "fan" && !state.zoomOpen && selectedCatalogs.length > 1) {
-    renderFanWallStage(selectedCatalogs);
-    expandItemButton.disabled = true;
-    previousButton.disabled = false;
-    nextButton.disabled = false;
-    renderZoomView();
-    return;
-  }
 
   if (state.interactionMode === "cube") {
     renderCubeStage(catalog);
@@ -791,72 +723,6 @@ function renderCubeStage(catalog) {
   const scene = document.getElementById("cubeScene");
   const cube = document.getElementById("catalogCube");
   attachCubeInteraction(scene, cube, catalog.id);
-}
-
-function renderCubeWallStage(selectedCatalogs) {
-  const wallClass = `cube-wall count-${Math.min(selectedCatalogs.length, 4)} ${selectedCatalogs.length > 4 ? "dense" : ""}`;
-  stackLayer.innerHTML = `
-    <div class="${wallClass}">
-      ${selectedCatalogs.map((catalog, catalogIndex) => renderCubeScene(catalog, {
-        rotationX: -14 + ((catalogIndex % 2) * 6),
-        rotationY: 22 + (catalogIndex * 24),
-        interactive: false,
-        sceneClass: "cube-scene auto-spin wall-scene",
-        cubeClass: "catalog-cube wall-cube",
-        sceneStyle: `animation-delay: -${catalogIndex * 2.4}s;`,
-        catalogIndex
-      })).join("")}
-    </div>
-  `;
-
-  stackLayer.querySelectorAll(".wall-scene").forEach((scene) => {
-    scene.addEventListener("click", (event) => {
-      const catalogId = scene.dataset.catalogId;
-      const faceIndex = getCubeFaceIndexFromElement(event.target);
-      activateCatalog(catalogId, "Focused from cube wall");
-      if (faceIndex !== null) {
-        openCubeFace(faceIndex, catalogId);
-      }
-    });
-  });
-}
-
-function renderFanWallStage(selectedCatalogs) {
-  const wallClass = `fan-wall ${selectedCatalogs.length > 4 ? "dense" : ""}`;
-  stackLayer.innerHTML = `
-    <div class="${wallClass}">
-      ${selectedCatalogs.map((catalog) => renderFanWallCatalog(catalog)).join("")}
-    </div>
-  `;
-
-  stackLayer.querySelectorAll(".fan-wall-scene").forEach((scene) => {
-    scene.addEventListener("click", () => {
-      const catalogId = scene.dataset.catalogId;
-      activateCatalog(catalogId, "Focused from fan wall");
-      state.interactionMode = "fan";
-      renderModes();
-      renderStage();
-    });
-  });
-}
-
-function renderFanWallCatalog(catalog) {
-  const items = catalog.items
-    .slice(0, Math.min(catalog.items.length, 4))
-    .map((item, index) => ({
-      ...item,
-      index,
-      relative: index
-    }));
-
-  return `
-    <div class="fan-wall-scene" data-catalog-id="${catalog.id}">
-      <div class="fan-wall-stack">
-        ${items.map((item) => renderCard(catalog, item)).join("")}
-      </div>
-      <div class="fan-wall-label">${catalog.title}</div>
-    </div>
-  `;
 }
 
 function renderCubeScene(catalog, options = {}) {
@@ -928,9 +794,6 @@ function openCubeFace(index, catalogId = state.activeCatalogId) {
   stopDemo();
   playUiSound("select");
   state.activeCatalogId = catalogId;
-  if (!state.selectedCatalogIds.includes(catalogId)) {
-    state.selectedCatalogIds = [catalogId];
-  }
   state.activeIndex = Number(index) || 0;
   state.interactionMode = "fan";
   state.fanOpen = true;
@@ -1493,15 +1356,8 @@ function getCubeFaceIndexAtPoint(clientX, clientY) {
   return face?.dataset.index || null;
 }
 
-function getCubeFaceIndexFromElement(element) {
-  const face = element.closest?.(".cube-face");
-  if (!face) return null;
-  return face.dataset.index || null;
-}
-
 function returnToWall() {
   state.activeCatalogId = null;
-  state.selectedCatalogIds = [];
   state.activeIndex = 0;
   state.fanOpen = true;
   state.interactionMode = "cube";
@@ -1753,9 +1609,6 @@ function turnCatalog(direction) {
 
 function activateCatalog(catalogId, gestureLabel) {
   state.activeCatalogId = catalogId;
-  state.selectedCatalogIds = state.selectedCatalogIds.includes(catalogId)
-    ? state.selectedCatalogIds
-    : [catalogId];
   state.activeIndex = 0;
   state.fanOpen = true;
   resetCubeMotion();

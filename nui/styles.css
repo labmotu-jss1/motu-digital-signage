@@ -361,7 +361,7 @@ body::before {
 .dock-check-indicator {
   width: 18px;
   height: 18px;
-  border-radius: 5px;
+  border-radius: 999px;
   border: 1px solid rgba(200, 241, 255, 0.26);
   background: rgba(7, 18, 30, 0.76);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -369,29 +369,17 @@ body::before {
 }
 
 .dock-check-indicator::after {
-  content: "✓";
+  content: "";
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: #04131b;
-  font-size: 0.78rem;
-  font-weight: 900;
+  inset: 3px;
   background: linear-gradient(180deg, var(--cyan), var(--lime));
   border-radius: inherit;
-  opacity: 0;
-  transform: scale(0.82);
-  transition: opacity 140ms ease, transform 140ms ease;
+  transform: scale(0);
+  transition: transform 140ms ease;
 }
 
 .dock-check-input:checked + .dock-check-indicator::after {
-  opacity: 1;
   transform: scale(1);
-}
-
-.dock-card.multi-selected {
-  border-color: rgba(103, 239, 255, 0.32);
-  box-shadow: 0 0 0 1px rgba(103, 239, 255, 0.08);
 }
 
 .stage {
@@ -420,21 +408,6 @@ body::before {
   perspective: 1800px;
 }
 
-.cube-wall {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 10px;
-  align-items: center;
-  justify-items: center;
-  padding: 18px;
-}
-
-.cube-wall.dense {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
 .wall-scene {
   --cube-size: clamp(180px, 22vw, 280px);
   --cube-scene-size: calc(var(--cube-size) + 50px);
@@ -448,59 +421,6 @@ body::before {
   transform: scale(1.02);
 }
 
-.fan-wall {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
-  align-items: center;
-  justify-items: center;
-  padding: 18px;
-}
-
-.fan-wall.dense {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-}
-
-.fan-wall-scene {
-  position: relative;
-  width: min(100%, 320px);
-  height: 360px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-.fan-wall-stack {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.fan-wall .stack-card {
-  width: 220px;
-  height: 300px;
-}
-
-.fan-wall-scene .stack-card:hover {
-  transform: none;
-}
-
-.fan-wall-label {
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(200, 241, 255, 0.18);
-  background: rgba(7, 18, 30, 0.78);
-  color: #f4f8fc;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  backdrop-filter: blur(10px);
-}
 
 .gesture-hint {
   display: none;
