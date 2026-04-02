@@ -374,9 +374,11 @@ body::before {
 }
 
 .cube-scene {
+  --cube-size: clamp(250px, 44vw, 430px);
+  --cube-scene-size: calc(var(--cube-size) + 90px);
   position: relative;
-  width: min(520px, 54vw);
-  height: min(520px, 54vw);
+  width: var(--cube-scene-size);
+  height: var(--cube-scene-size);
   display: grid;
   place-items: center;
   transform-style: preserve-3d;
@@ -395,8 +397,8 @@ body::before {
 
 .catalog-cube {
   position: relative;
-  width: min(430px, 44vw);
-  height: min(430px, 44vw);
+  width: var(--cube-size);
+  height: var(--cube-size);
   transform-style: preserve-3d;
   transition: transform 160ms ease;
   pointer-events: none;
@@ -451,12 +453,12 @@ body::before {
   pointer-events: none;
 }
 
-.cube-face.front { transform: rotateY(0deg) translateZ(calc(min(430px, 44vw) / 2)); }
-.cube-face.right { transform: rotateY(90deg) translateZ(calc(min(430px, 44vw) / 2)); }
-.cube-face.back { transform: rotateY(180deg) translateZ(calc(min(430px, 44vw) / 2)); }
-.cube-face.left { transform: rotateY(-90deg) translateZ(calc(min(430px, 44vw) / 2)); }
-.cube-face.top { transform: rotateX(90deg) translateZ(calc(min(430px, 44vw) / 2)); }
-.cube-face.bottom { transform: rotateX(-90deg) translateZ(calc(min(430px, 44vw) / 2)); }
+.cube-face.front { transform: rotateY(0deg) translateZ(calc(var(--cube-size) / 2)); }
+.cube-face.right { transform: rotateY(90deg) translateZ(calc(var(--cube-size) / 2)); }
+.cube-face.back { transform: rotateY(180deg) translateZ(calc(var(--cube-size) / 2)); }
+.cube-face.left { transform: rotateY(-90deg) translateZ(calc(var(--cube-size) / 2)); }
+.cube-face.top { transform: rotateX(90deg) translateZ(calc(var(--cube-size) / 2)); }
+.cube-face.bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube-size) / 2)); }
 
 body.iphone-webkit .cube-face {
   box-shadow:
@@ -471,10 +473,10 @@ body.iphone-webkit .cube-face.active {
     inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-body.iphone-webkit .cube-face.right { transform: rotateY(89.6deg) translateZ(calc(min(430px, 44vw) / 2)); }
-body.iphone-webkit .cube-face.left { transform: rotateY(-89.6deg) translateZ(calc(min(430px, 44vw) / 2)); }
-body.iphone-webkit .cube-face.top { transform: rotateX(89.6deg) translateZ(calc(min(430px, 44vw) / 2)); }
-body.iphone-webkit .cube-face.bottom { transform: rotateX(-89.6deg) translateZ(calc(min(430px, 44vw) / 2)); }
+body.iphone-webkit .cube-face.right { transform: rotateY(89.6deg) translateZ(calc(var(--cube-size) / 2)); }
+body.iphone-webkit .cube-face.left { transform: rotateY(-89.6deg) translateZ(calc(var(--cube-size) / 2)); }
+body.iphone-webkit .cube-face.top { transform: rotateX(89.6deg) translateZ(calc(var(--cube-size) / 2)); }
+body.iphone-webkit .cube-face.bottom { transform: rotateX(-89.6deg) translateZ(calc(var(--cube-size) / 2)); }
 
 .cube-face .preview-shell {
   height: 100%;
@@ -1214,13 +1216,15 @@ body.force-mobile-view .stage.expanded-mode {
 }
 
 body.force-mobile-view .cube-scene {
-  width: min(84vw, 360px);
-  height: min(84vw, 360px);
+  --cube-size: min(54vw, 208px);
+  --cube-scene-size: calc(var(--cube-size) + 44px);
+  width: var(--cube-scene-size);
+  height: var(--cube-scene-size);
 }
 
 body.force-mobile-view .catalog-cube {
-  width: min(70vw, 286px);
-  height: min(70vw, 286px);
+  width: var(--cube-size);
+  height: var(--cube-size);
 }
 
 body.force-mobile-view .cube-face,
@@ -1529,13 +1533,15 @@ body.force-mobile-view .audio-stage-card {
   }
 
   .cube-scene {
-    width: min(84vw, 360px);
-    height: min(84vw, 360px);
+    --cube-size: min(54vw, 208px);
+    --cube-scene-size: calc(var(--cube-size) + 44px);
+    width: var(--cube-scene-size);
+    height: var(--cube-scene-size);
   }
 
   .catalog-cube {
-    width: min(70vw, 286px);
-    height: min(70vw, 286px);
+    width: var(--cube-size);
+    height: var(--cube-size);
   }
 
   .cube-face,
