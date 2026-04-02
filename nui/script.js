@@ -788,15 +788,16 @@ function renderCarouselCard(catalog, item, position, total) {
   const angle = offset * angleStep;
   const viewportWidth = window.innerWidth || 1440;
   const viewportHeight = window.innerHeight || 900;
-  const radiusX = Math.min(Math.max(viewportWidth * 0.26, 320), 470);
-  const radiusZ = Math.min(Math.max(viewportWidth * 0.13, 150), 220);
-  const backLift = Math.min(Math.max(viewportHeight * 0.11, 76), 128);
+  const radiusX = Math.min(Math.max(viewportWidth * 0.3, 360), 560);
+  const radiusZ = Math.min(Math.max(viewportWidth * 0.16, 180), 280);
+  const verticalRadius = Math.min(Math.max(viewportHeight * 0.12, 96), 150);
   const x = Math.sin(angle) * radiusX;
   const z = Math.cos(angle) * radiusZ;
-  const y = (z < 0 ? -((-z / radiusZ) * backLift) : 0) + (offset === 0 ? -22 : 0);
+  const y = (Math.cos(angle) * verticalRadius) - verticalRadius * 0.24;
   const normalizedDepth = (z + radiusZ) / (radiusZ * 2);
-  const scale = 0.84 + (normalizedDepth * 0.18) + (offset === 0 ? 0.05 : 0);
-  const rotateY = -Math.sin(angle) * 14;
+  const scale = 0.9 + (normalizedDepth * 0.08) + (offset === 0 ? 0.03 : 0);
+  const rotateY = -Math.sin(angle) * 22;
+  const rotateX = 16 - (normalizedDepth * 11);
   const opacity = getCarouselOpacity(offset, normalizedDepth);
   const zIndex = Math.round((normalizedDepth * 100) + (offset === 0 ? 100 : 0));
   return `
@@ -805,7 +806,7 @@ function renderCarouselCard(catalog, item, position, total) {
       data-index="${item.index}"
       style="transform: translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(1)}px); opacity:${opacity}; z-index:${zIndex};"
     >
-      <div class="carousel-card-face" style="transform: rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)});">
+      <div class="carousel-card-face" style="transform: rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)});">
         ${renderPreview(catalog, item)}
       </div>
     </article>
@@ -822,10 +823,10 @@ function getCarouselOffset(position, total, activeIndex) {
 function getCarouselOpacity(offset, normalizedDepth = 0.5) {
   const distance = Math.abs(offset);
   if (distance === 0) return 1;
-  if (distance === 1) return Math.max(0.8, 0.82 + (normalizedDepth * 0.14));
-  if (distance === 2) return Math.max(0.62, 0.68 + (normalizedDepth * 0.12));
-  if (distance === 3) return Math.max(0.48, 0.56 + (normalizedDepth * 0.1));
-  return 0.42;
+  if (distance === 1) return Math.max(0.86, 0.86 + (normalizedDepth * 0.08));
+  if (distance === 2) return Math.max(0.74, 0.76 + (normalizedDepth * 0.08));
+  if (distance === 3) return Math.max(0.62, 0.66 + (normalizedDepth * 0.06));
+  return 0.56;
 }
 
 function renderCubeStage(catalog) {
