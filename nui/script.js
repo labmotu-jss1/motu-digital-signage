@@ -156,7 +156,6 @@ const demoButton = document.getElementById("demoButton");
 const homeButton = document.getElementById("homeButton");
 const viewToggleButton = document.getElementById("viewToggleButton");
 const cubeButton = document.getElementById("cubeButton");
-const fanButton = document.getElementById("fanButton");
 const spinButton = document.getElementById("spinButton");
 const resetButton = document.getElementById("resetButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
@@ -186,8 +185,8 @@ const soundState = {
 const state = {
   activeCatalogId: null,
   activeIndex: 0,
-  fanOpen: true,
-  interactionMode: "fan",
+  fanOpen: false,
+  interactionMode: "carousel",
   cubeRotationX: -18,
   cubeRotationY: 24,
   cubePointer: null,
@@ -226,10 +225,6 @@ viewToggleButton?.addEventListener("click", () => {
   window.location.href = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
 });
 
-fanButton.addEventListener("click", () => {
-  setInteractionMode("fan");
-});
-
 homeButton.addEventListener("click", () => {
   playUiSound("return");
   goHome();
@@ -248,7 +243,6 @@ resetButton.addEventListener("click", () => {
   playUiSound("return");
   resetCubeMotion();
   state.activeIndex = 0;
-  state.fanOpen = true;
   state.interactionMode = "cube";
   state.lastGesture = "Returned to cube";
   renderModes();
@@ -339,6 +333,25 @@ document.addEventListener("keydown", (event) => {
       renderStage();
     }
     return;
+  }
+
+  if (!state.zoomOpen && state.interactionMode === "carousel") {
+    if (event.key === "ArrowLeft") {
+      stopDemo();
+      turnCatalog(-1);
+      return;
+    }
+    if (event.key === "ArrowRight") {
+      stopDemo();
+      turnCatalog(1);
+      return;
+    }
+    if (event.key === "Enter") {
+      stopDemo();
+      playUiSound("expand");
+      openZoomView();
+      return;
+    }
   }
 
   if (!state.zoomOpen) return;
@@ -598,7 +611,6 @@ function renderModes() {
   const catalog = getActiveCatalog();
   [
     { element: cubeButton, mode: "cube" },
-    { element: fanButton, mode: "fan" },
     { element: spinButton, mode: "carousel" }
   ].forEach(({ element, mode }) => {
     if (!element) return;
@@ -637,7 +649,6 @@ function setInteractionMode(mode) {
   stopDemo();
   playUiSound("select");
   state.interactionMode = mode;
-  state.fanOpen = mode !== "carousel";
   state.lastGesture = `Mode: ${mode}`;
   renderModes();
   renderStage();
@@ -795,8 +806,7 @@ function openCubeFace(index, catalogId = state.activeCatalogId) {
   playUiSound("select");
   state.activeCatalogId = catalogId;
   state.activeIndex = Number(index) || 0;
-  state.interactionMode = "fan";
-  state.fanOpen = true;
+  state.interactionMode = "carousel";
   state.lastGesture = "Cube face opened";
   renderModes();
   renderStage();
@@ -1359,8 +1369,8 @@ function getCubeFaceIndexAtPoint(clientX, clientY) {
 function returnToWall() {
   state.activeCatalogId = null;
   state.activeIndex = 0;
-  state.fanOpen = true;
-  state.interactionMode = "cube";
+  state.fanOpen = false;
+  state.interactionMode = "carousel";
   state.lastGesture = "Returned";
   renderDock();
   renderModes();
@@ -1521,8 +1531,8 @@ function goHomeFromZoom() {
   stopDemo();
   resetCubeMotion();
   state.activeIndex = 0;
-  state.fanOpen = true;
-  state.interactionMode = "cube";
+  state.fanOpen = false;
+  state.interactionMode = "carousel";
   state.lastGesture = "Home from zoom";
   renderModes();
   renderStage();
@@ -1610,9 +1620,9 @@ function turnCatalog(direction) {
 function activateCatalog(catalogId, gestureLabel) {
   state.activeCatalogId = catalogId;
   state.activeIndex = 0;
-  state.fanOpen = true;
+  state.fanOpen = false;
   resetCubeMotion();
-  state.interactionMode = "cube";
+  state.interactionMode = "carousel";
   state.lastGesture = gestureLabel;
   renderDock();
   renderModes();
@@ -1655,15 +1665,6 @@ function startDemo() {
 
     if (active.mode === "binder") {
       turnCatalog(1);
-      return;
-    }
-
-    if (state.interactionMode === "fan") {
-      state.interactionMode = "carousel";
-      state.fanOpen = false;
-      state.lastGesture = "Demo switched mode";
-      renderModes();
-      renderStage();
       return;
     }
 
