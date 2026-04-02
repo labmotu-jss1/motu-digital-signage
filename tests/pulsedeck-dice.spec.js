@@ -15,6 +15,16 @@ const mockDiceCatalogs = [
   { id: "dice-black", title: "Dice Black", mode: "fan", items: makeDiceItems("black") }
 ];
 
+async function getVisibleDiceCounts(page) {
+  return page.evaluate(() => {
+    const counts = {};
+    for (const face of ["front", "right", "back", "left", "top", "bottom"]) {
+      counts[face] = document.querySelectorAll(`.cube-face.${face} .dice-pip.visible`).length;
+    }
+    return counts;
+  });
+}
+
 test.beforeEach(async ({ page }) => {
   await page.route("https://40-160-254-60.sslip.io/motu-lib/catalogs.json", async (route) => {
     await route.fulfill({
@@ -53,9 +63,25 @@ test("dice css cube works across the three color catalogs", async ({ page }) => 
   await expect(page.locator(".dice-face[data-dice-render='css']")).toHaveCount(6);
   await expect(page.locator(".cube-face.front .dice-face.white")).toBeVisible();
   await expect(page.locator(".cube-face.front .dice-pip.visible")).toHaveCount(1);
+  await expect.poll(() => getVisibleDiceCounts(page)).toEqual({
+    front: 1,
+    right: 3,
+    back: 6,
+    left: 4,
+    top: 2,
+    bottom: 5
+  });
 
   await page.locator("#nextButton").click();
   await expect(page.locator(".cube-face.front .dice-pip.visible")).toHaveCount(2);
+  await expect.poll(() => getVisibleDiceCounts(page)).toEqual({
+    front: 2,
+    right: 1,
+    back: 5,
+    left: 6,
+    top: 4,
+    bottom: 3
+  });
 
   await page.locator("#dock .dock-card").nth(1).click();
   await expect(page.locator(".cube-face.front .dice-face.red")).toBeVisible();

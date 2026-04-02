@@ -663,14 +663,16 @@ function renderStage() {
 }
 
 function renderCubeStage(catalog) {
-  const faces = Array.from({ length: 6 }, (_, faceIndex) => {
-    const itemIndex = (state.activeIndex + faceIndex) % catalog.items.length;
-    const item = catalog.items[itemIndex];
-    return {
-      ...item,
-      index: itemIndex
-    };
-  });
+  const faces = isDiceCatalog(catalog)
+    ? buildDiceCubeFaces(catalog)
+    : Array.from({ length: 6 }, (_, faceIndex) => {
+        const itemIndex = (state.activeIndex + faceIndex) % catalog.items.length;
+        const item = catalog.items[itemIndex];
+        return {
+          ...item,
+          index: itemIndex
+        };
+      });
   const faceClasses = ["front", "right", "back", "left", "top", "bottom"];
 
   stackLayer.innerHTML = `
@@ -745,8 +747,41 @@ function isDiceCatalog(catalog) {
   return source.includes("dice");
 }
 
+function buildDiceCubeFaces(catalog) {
+  const activeValue = normalizeDiceValue(catalog.items[state.activeIndex]?.diceValue || 1);
+  const faceValues = getDiceFaceLayout(activeValue);
+
+  return faceValues.map((faceValue) => {
+    const itemIndex = catalog.items.findIndex((item) => normalizeDiceValue(item.diceValue) === faceValue);
+    const item = catalog.items[itemIndex >= 0 ? itemIndex : 0] || {};
+    return {
+      ...item,
+      index: itemIndex >= 0 ? itemIndex : 0,
+      diceValue: faceValue
+    };
+  });
+}
+
+function normalizeDiceValue(value) {
+  const numeric = Number(value);
+  if (numeric >= 1 && numeric <= 6) return numeric;
+  return 1;
+}
+
+function getDiceFaceLayout(frontValue) {
+  const layouts = {
+    1: [1, 3, 6, 4, 2, 5],
+    2: [2, 1, 5, 6, 4, 3],
+    3: [3, 5, 4, 1, 2, 6],
+    4: [4, 6, 3, 2, 1, 5],
+    5: [5, 3, 2, 4, 6, 1],
+    6: [6, 3, 1, 2, 4, 5]
+  };
+  return layouts[frontValue] || layouts[1];
+}
+
 function renderDiceFace(catalog, item, faceIndex) {
-  const faceValue = Number(item.diceValue) || [1, 3, 6, 4, 2, 5][faceIndex] || 1;
+  const faceValue = normalizeDiceValue(item.diceValue) || [1, 3, 6, 4, 2, 5][faceIndex] || 1;
   const faceLabel = item.title || `Dice ${faceValue}`;
   const color = getDiceColor(catalog, item);
 
