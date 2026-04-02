@@ -1125,15 +1125,15 @@ function renderCard(catalog, item) {
 function computeLayout(catalog, relative) {
   if (state.interactionMode === "carousel") {
     const slot = Math.max(0, Math.min(relative + 2, 5));
-    const xMap = [-340, -205, -58, 122, 292, 428];
-    const yMap = [112, 46, 0, 24, 86, 156];
-    const rotateMap = [-8, -4, 0, 3, 6, 9];
-    const yawMap = [48, 30, 0, -24, -42, -54];
-    const scaleMap = [0.62, 0.76, 1.08, 0.92, 0.72, 0.52];
+    const xMap = [-520, -290, -18, 256, 486, 646];
+    const yMap = [146, 60, 0, 32, 104, 174];
+    const rotateMap = [-12, -7, 0, 5, 9, 13];
+    const yawMap = [70, 44, 0, -34, -56, -70];
+    const scaleMap = [0.28, 0.62, 1.34, 0.78, 0.48, 0.24];
     return {
       transform: `translateX(${xMap[slot]}px) translateY(${yMap[slot]}px) rotateY(${yawMap[slot]}deg) rotate(${rotateMap[slot]}deg) scale(${scaleMap[slot]})`,
-      opacity: [0.24, 0.52, 1, 0.82, 0.5, 0.22][slot],
-      zIndex: 100 - slot
+      opacity: [0.08, 0.44, 1, 0.66, 0.28, 0.06][slot],
+      zIndex: [10, 45, 120, 70, 28, 8][slot]
     };
   }
 
@@ -1170,6 +1170,25 @@ function renderPreview(catalog, item) {
   }
 
   if (item.assetUrl && getAssetType(item) === "video") {
+    if (state.interactionMode === "carousel") {
+      return `
+        <div class="preview-shell video live-carousel-video">
+          <video
+            class="carousel-card-video"
+            src="${item.assetUrl}"
+            autoplay
+            muted
+            loop
+            playsinline
+            webkit-playsinline="true"
+            preload="metadata"
+          ></video>
+          <div class="carousel-video-sheen"></div>
+          <div class="asset-title">${item.title}</div>
+        </div>
+      `;
+    }
+
     return `
       <div class="preview-shell video">
         <div class="asset-badge">Video</div>
@@ -1622,7 +1641,7 @@ function activateCatalog(catalogId, gestureLabel) {
   state.activeIndex = 0;
   state.fanOpen = false;
   resetCubeMotion();
-  state.interactionMode = "carousel";
+  state.interactionMode = "cube";
   state.lastGesture = gestureLabel;
   renderDock();
   renderModes();
