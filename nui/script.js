@@ -584,7 +584,7 @@ async function refreshCatalogs() {
 
 function renderDock() {
   dock.innerHTML = catalogs.map((catalog) => `
-    <article class="dock-card ${state.activeCatalogId === catalog.id ? "active" : ""}" data-catalog-id="${catalog.id}">
+    <article class="dock-card ${state.activeCatalogId === catalog.id ? "active" : ""} ${state.selectedCatalogIds.includes(catalog.id) ? "multi-selected" : ""}" data-catalog-id="${catalog.id}">
       <label class="dock-check">
         <input class="dock-check-input" type="checkbox" ${state.selectedCatalogIds.includes(catalog.id) ? "checked" : ""} />
         <span class="dock-check-indicator" aria-hidden="true"></span>
@@ -594,7 +594,11 @@ function renderDock() {
   `).join("");
 
   dock.querySelectorAll(".dock-card").forEach((card) => {
+    const checkShell = card.querySelector(".dock-check");
     const checkbox = card.querySelector(".dock-check-input");
+    checkShell?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
     checkbox?.addEventListener("click", (event) => {
       event.stopPropagation();
     });
@@ -629,6 +633,9 @@ function setCatalogSelected(catalogId, selected) {
       state.activeCatalogId = state.selectedCatalogIds[0] || null;
       state.activeIndex = 0;
     }
+  }
+  if (state.selectedCatalogIds.length > 1 && state.interactionMode === "carousel") {
+    state.interactionMode = "cube";
   }
   renderDock();
   renderModes();

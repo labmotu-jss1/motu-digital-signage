@@ -301,16 +301,6 @@ body::before {
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 10px;
-  position: relative;
-}
-
-.dock-list::before {
-  content: "v";
-  color: rgba(191, 208, 225, 0.82);
-  font-size: 0.92rem;
-  line-height: 1;
-  align-self: center;
-  margin-right: 2px;
 }
 
 .dock-card {
@@ -390,6 +380,11 @@ body::before {
 
 .dock-check-input:checked + .dock-check-indicator::after {
   transform: scale(1);
+}
+
+.dock-card.multi-selected {
+  border-color: rgba(103, 239, 255, 0.32);
+  box-shadow: 0 0 0 1px rgba(103, 239, 255, 0.08);
 }
 
 .stage {
