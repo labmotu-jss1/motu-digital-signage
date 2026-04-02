@@ -678,6 +678,13 @@ function renderStage() {
     return;
   }
 
+  if (state.interactionMode === "carousel" && !state.zoomOpen) {
+    renderCarouselStage(catalog);
+    expandItemButton.disabled = false;
+    renderZoomView();
+    return;
+  }
+
   if (state.zoomOpen) {
     renderExpandedStage(catalog);
     expandItemButton.disabled = false;
@@ -720,6 +727,81 @@ function renderStage() {
 
   expandItemButton.disabled = false;
   renderZoomView();
+}
+
+function renderCarouselStage(catalog) {
+  const items = buildCarouselItems(catalog);
+  stackLayer.innerHTML = `
+    <div class="carousel-ring-stage">
+      <div class="carousel-floor"></div>
+      <div class="carousel-ring">
+        ${items.map((item) => renderCarouselCard(catalog, item)).join("")}
+      </div>
+    </div>
+  `;
+
+  stackLayer.querySelectorAll(".carousel-ring-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      if (Date.now() < state.suppressCardClickUntil) return;
+      const cardIndex = Number(card.dataset.index);
+      stopDemo();
+      if (cardIndex === state.activeIndex) {
+        playUiSound("expand");
+        openZoomView();
+        return;
+      }
+      playUiSound("select");
+      state.activeIndex = cardIndex;
+      state.lastGesture = "Selected item";
+      renderStage();
+    });
+  });
+}
+
+function buildCarouselItems(catalog) {
+  const offsets = [-3, -2, -1, 0, 1, 2, 3];
+  return offsets
+    .filter((offset, position) => position < catalog.items.length)
+    .map((offset) => {
+      const index = (state.activeIndex + offset + catalog.items.length) % catalog.items.length;
+      return {
+        ...catalog.items[index],
+        index,
+        relative: offset
+      };
+    });
+}
+
+function renderCarouselCard(catalog, item) {
+  const layout = computeCarouselLayout(item.relative);
+  return `
+    <article
+      class="carousel-ring-card ${item.relative === 0 ? "center" : ""}"
+      data-index="${item.index}"
+      style="transform:${layout.transform}; opacity:${layout.opacity}; z-index:${layout.zIndex};"
+    >
+      ${renderPreview(catalog, item)}
+    </article>
+  `;
+}
+
+function computeCarouselLayout(relative) {
+  const slot = Math.max(-3, Math.min(relative, 3));
+  const layoutMap = {
+    "-3": { x: -560, y: 122, rotate: 70, scale: 0.36, opacity: 0.18, z: 10 },
+    "-2": { x: -360, y: 56, rotate: 54, scale: 0.58, opacity: 0.42, z: 30 },
+    "-1": { x: -170, y: 10, rotate: 28, scale: 0.82, opacity: 0.76, z: 60 },
+    "0": { x: 0, y: -8, rotate: 0, scale: 1.16, opacity: 1, z: 120 },
+    "1": { x: 170, y: 10, rotate: -28, scale: 0.82, opacity: 0.76, z: 60 },
+    "2": { x: 360, y: 56, rotate: -54, scale: 0.58, opacity: 0.42, z: 30 },
+    "3": { x: 560, y: 122, rotate: -70, scale: 0.36, opacity: 0.18, z: 10 }
+  };
+  const layout = layoutMap[String(slot)];
+  return {
+    transform: `translateX(${layout.x}px) translateY(${layout.y}px) rotateY(${layout.rotate}deg) scale(${layout.scale})`,
+    opacity: layout.opacity,
+    zIndex: layout.z
+  };
 }
 
 function renderCubeStage(catalog) {
