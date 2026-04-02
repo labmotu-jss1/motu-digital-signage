@@ -519,13 +519,7 @@ function withInjectedCatalogs(nextCatalogs) {
 function normalizeCatalogs(nextCatalogs) {
   if (!Array.isArray(nextCatalogs)) return [];
 
-  const diceCatalogs = nextCatalogs.filter((catalog) => isLegacyDiceCatalog(catalog));
-  const nonDiceCatalogs = nextCatalogs.filter((catalog) => !isLegacyDiceCatalog(catalog));
-
-  if (!diceCatalogs.length) {
-    return nonDiceCatalogs;
-  }
-
+  const nonDiceCatalogs = nextCatalogs.filter((catalog) => !isLegacyDiceCatalog(catalog) && catalog.id !== "dice");
   const diceItems = Array.from({ length: 6 }, (_, index) => ({
     title: `Dice ${index + 1}`,
     description: `Synthetic mixed-color dice face ${index + 1}.`,
