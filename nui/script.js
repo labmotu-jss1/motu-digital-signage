@@ -771,29 +771,37 @@ function renderCarouselStage(catalog) {
       state.carouselTargetTiltX = 9 + (ratioY * 24);
       if (state.carouselDrag?.id === event.pointerId) {
         const deltaX = event.clientX - state.carouselDrag.lastX;
+        const deltaY = event.clientY - state.carouselDrag.lastY;
         state.carouselTargetAngle = normalizeOrbitAngle(
           state.carouselTargetAngle - (deltaX * 0.0048)
         );
+        state.carouselTargetTiltX = Math.max(7, Math.min(36, state.carouselTargetTiltX + (deltaY * 0.08)));
         state.carouselDrag.lastX = event.clientX;
-        state.carouselDrag.moved = state.carouselDrag.moved || Math.abs(event.clientX - state.carouselDrag.startX) > 6;
+        state.carouselDrag.lastY = event.clientY;
+        state.carouselDrag.moved = state.carouselDrag.moved
+          || Math.abs(event.clientX - state.carouselDrag.startX) > 6
+          || Math.abs(event.clientY - state.carouselDrag.startY) > 6;
         syncActiveIndexFromAngle(catalog.items.length);
       }
       ensureCarouselAnimation(catalog, ring);
     });
 
-    stage?.addEventListener("pointerdown", (event) => {
-      state.carouselDrag = {
-        id: event.pointerId,
-        startX: event.clientX,
-        lastX: event.clientX,
-        moved: false
-      };
-      stage.setPointerCapture?.(event.pointerId);
-      stage.classList.add("dragging");
-    });
-
     stage?.addEventListener("pointerup", (event) => {
       if (state.carouselDrag?.id === event.pointerId && state.carouselDrag.moved) {
+        state.suppressCardClickUntil = Date.now() + 180;
+      }
+      if (state.carouselDrag?.id === event.pointerId && !state.carouselDrag.moved) {
+        const cardIndex = state.carouselDrag.cardIndex;
+        stopDemo();
+        if (cardIndex === state.activeIndex) {
+          playUiSound("expand");
+          openZoomView();
+        } else {
+          playUiSound("select");
+          focusCarouselIndex(cardIndex, catalog.items.length);
+          state.lastGesture = "Selected item";
+          ensureCarouselAnimation(catalog, ring);
+        }
         state.suppressCardClickUntil = Date.now() + 180;
       }
       if (state.carouselDrag?.id === event.pointerId) {
@@ -817,19 +825,20 @@ function renderCarouselStage(catalog) {
     });
 
     ring?.querySelectorAll(".carousel-ring-card").forEach((card) => {
-      card.addEventListener("click", () => {
-        if (Date.now() < state.suppressCardClickUntil) return;
-        const cardIndex = Number(card.dataset.index);
-        stopDemo();
-        if (cardIndex === state.activeIndex) {
-          playUiSound("expand");
-          openZoomView();
-          return;
-        }
-        playUiSound("select");
-        focusCarouselIndex(cardIndex, catalog.items.length);
-        state.lastGesture = "Selected item";
-        ensureCarouselAnimation(catalog, ring);
+      card.addEventListener("pointerdown", (event) => {
+        const face = event.target.closest(".carousel-card-face");
+        if (!face) return;
+        state.carouselDrag = {
+          id: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          lastX: event.clientX,
+          lastY: event.clientY,
+          moved: false,
+          cardIndex: Number(card.dataset.index)
+        };
+        stage.setPointerCapture?.(event.pointerId);
+        stage.classList.add("dragging");
       });
     });
   }
