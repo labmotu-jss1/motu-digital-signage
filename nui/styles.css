@@ -321,6 +321,7 @@ body::before {
   min-height: auto;
   box-shadow: none;
   align-self: flex-start;
+  gap: 10px;
 }
 
 .dock-card::after {
@@ -341,6 +342,43 @@ body::before {
   white-space: nowrap;
   display: inline-block;
   vertical-align: top;
+}
+
+.dock-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.dock-check-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dock-check-indicator {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 241, 255, 0.26);
+  background: rgba(7, 18, 30, 0.76);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  position: relative;
+}
+
+.dock-check-indicator::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--cyan), var(--lime));
+  transform: scale(0);
+  transition: transform 140ms ease;
+}
+
+.dock-check-input:checked + .dock-check-indicator::after {
+  transform: scale(1);
 }
 
 .stage {
@@ -367,6 +405,34 @@ body::before {
   display: grid;
   place-items: center;
   perspective: 1800px;
+}
+
+.cube-wall {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  align-items: center;
+  justify-items: center;
+  padding: 18px;
+}
+
+.cube-wall.dense {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.wall-scene {
+  --cube-size: clamp(180px, 22vw, 280px);
+  --cube-scene-size: calc(var(--cube-size) + 50px);
+}
+
+.wall-cube {
+  transition: transform 240ms ease;
+}
+
+.wall-scene:hover .wall-cube {
+  transform: scale(1.02);
 }
 
 .gesture-hint {
@@ -502,6 +568,15 @@ body.iphone-webkit .cube-face.bottom { transform: rotateX(-89.6deg) translateZ(c
   object-fit: cover;
   display: block;
   filter: saturate(1.08) contrast(1.02);
+  border: 0;
+}
+
+.cube-video-shell.youtube .cube-face-video-embed {
+  transform: scale(1.42);
+  transform-origin: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .cube-video-shell::after {

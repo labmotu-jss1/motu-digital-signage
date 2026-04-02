@@ -185,6 +185,7 @@ const soundState = {
 
 const state = {
   activeCatalogId: null,
+  selectedCatalogIds: [],
   activeIndex: 0,
   fanOpen: true,
   interactionMode: "fan",
@@ -450,6 +451,12 @@ function getActiveCatalog() {
   return catalogs.find((catalog) => catalog.id === state.activeCatalogId) || null;
 }
 
+function getSelectedCatalogs() {
+  return state.selectedCatalogIds
+    .map((catalogId) => catalogs.find((catalog) => catalog.id === catalogId))
+    .filter(Boolean);
+}
+
 async function init() {
   catalogs = await loadCatalogs();
   catalogCount.textContent = `${catalogs.length} Catalogs`;
@@ -479,18 +486,59 @@ async function loadCatalogs() {
 
     const payload = await response.json();
     if (!Array.isArray(payload) || payload.length === 0) {
-      return withInjectedCatalogs(fallbackCatalogs);
+      return normalizeCatalogs(withInjectedCatalogs(fallbackCatalogs));
     }
 
-    return withInjectedCatalogs(payload);
+    return normalizeCatalogs(withInjectedCatalogs(payload));
   } catch (error) {
     console.warn("Falling back to bundled sample catalogs.", error);
-    return withInjectedCatalogs(fallbackCatalogs);
+    return normalizeCatalogs(withInjectedCatalogs(fallbackCatalogs));
   }
 }
 
 function withInjectedCatalogs(nextCatalogs) {
   return Array.isArray(nextCatalogs) ? [...nextCatalogs] : [];
+}
+
+function normalizeCatalogs(nextCatalogs) {
+  if (!Array.isArray(nextCatalogs)) return [];
+
+  const diceCatalogs = nextCatalogs.filter((catalog) => isLegacyDiceCatalog(catalog));
+  const nonDiceCatalogs = nextCatalogs.filter((catalog) => !isLegacyDiceCatalog(catalog));
+
+  if (!diceCatalogs.length) {
+    return nonDiceCatalogs;
+  }
+
+  const diceItems = Array.from({ length: 6 }, (_, index) => ({
+    title: `Dice ${index + 1}`,
+    description: `Synthetic mixed-color dice face ${index + 1}.`,
+    meta: ["DICE", "MIXED", "Live VM"],
+    preview: "media",
+    assetType: "dice",
+    extension: ".dice",
+    diceValue: index + 1,
+    color: "mixed"
+  }));
+
+  return [
+    {
+      id: "dice",
+      title: "Dice",
+      mode: "fan",
+      badge: "Dice Cube · 6",
+      description: "Single dice catalog with color rotation across white, red, and black faces.",
+      accent: "lime",
+      items: diceItems
+    },
+    ...nonDiceCatalogs
+  ];
+}
+
+function isLegacyDiceCatalog(catalog) {
+  const id = `${catalog?.id || ""}`.toLowerCase();
+  const title = `${catalog?.title || ""}`.toLowerCase();
+  return id.startsWith("dice-") || title.startsWith("dice ");
 }
 
 function setLoadingState() {
@@ -517,6 +565,7 @@ async function refreshCatalogs() {
 
   const currentId = state.activeCatalogId;
   catalogs = nextCatalogs;
+  state.selectedCatalogIds = state.selectedCatalogIds.filter((catalogId) => catalogs.some((catalog) => catalog.id === catalogId));
   catalogCount.textContent = `${catalogs.length} Catalogs`;
 
   if (!currentId || !catalogs.some((catalog) => catalog.id === currentId)) {
@@ -536,17 +585,54 @@ async function refreshCatalogs() {
 function renderDock() {
   dock.innerHTML = catalogs.map((catalog) => `
     <article class="dock-card ${state.activeCatalogId === catalog.id ? "active" : ""}" data-catalog-id="${catalog.id}">
+      <label class="dock-check">
+        <input class="dock-check-input" type="checkbox" ${state.selectedCatalogIds.includes(catalog.id) ? "checked" : ""} />
+        <span class="dock-check-indicator" aria-hidden="true"></span>
+      </label>
       <h4>${catalog.title}</h4>
     </article>
   `).join("");
 
   dock.querySelectorAll(".dock-card").forEach((card) => {
+    const checkbox = card.querySelector(".dock-check-input");
+    checkbox?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+    checkbox?.addEventListener("change", (event) => {
+      stopDemo();
+      playUiSound("select");
+      setCatalogSelected(card.dataset.catalogId, event.target.checked);
+    });
     card.addEventListener("click", () => {
       stopDemo();
       playUiSound("select");
       activateCatalog(card.dataset.catalogId, "Pulled from wall");
     });
   });
+}
+
+function setCatalogSelected(catalogId, selected) {
+  if (selected) {
+    if (!state.selectedCatalogIds.includes(catalogId)) {
+      state.selectedCatalogIds = [...state.selectedCatalogIds, catalogId];
+    }
+    if (!state.activeCatalogId) {
+      state.activeCatalogId = catalogId;
+    }
+  } else {
+    if (state.selectedCatalogIds.length <= 1 && state.selectedCatalogIds.includes(catalogId)) {
+      state.selectedCatalogIds = [catalogId];
+    } else {
+      state.selectedCatalogIds = state.selectedCatalogIds.filter((id) => id !== catalogId);
+    }
+    if (!state.selectedCatalogIds.includes(state.activeCatalogId)) {
+      state.activeCatalogId = state.selectedCatalogIds[0] || null;
+      state.activeIndex = 0;
+    }
+  }
+  renderDock();
+  renderModes();
+  renderStage();
 }
 
 function renderModes() {
@@ -569,6 +655,7 @@ function canUseMode(catalog, mode) {
 
 function renderEmpty() {
   state.activeCatalogId = null;
+  state.selectedCatalogIds = [];
   state.zoomOpen = false;
   state.zoomScale = 1;
   stageTitle.textContent = "Select a catalog";
@@ -600,6 +687,7 @@ function setInteractionMode(mode) {
 
 function renderStage() {
   const catalog = getActiveCatalog();
+  const selectedCatalogs = getSelectedCatalogs();
   if (!catalog) {
     renderEmpty();
     return;
@@ -614,6 +702,15 @@ function renderStage() {
   previousButton.disabled = state.zoomOpen ? state.activeIndex <= 0 : false;
   nextButton.disabled = state.zoomOpen ? state.activeIndex >= catalog.items.length - 1 : false;
   expandItemButton.textContent = state.zoomOpen ? "Close" : "Expand";
+
+  if (state.interactionMode === "cube" && !state.zoomOpen && selectedCatalogs.length > 1) {
+    renderCubeWallStage(selectedCatalogs);
+    expandItemButton.disabled = true;
+    previousButton.disabled = false;
+    nextButton.disabled = false;
+    renderZoomView();
+    return;
+  }
 
   if (state.interactionMode === "cube") {
     renderCubeStage(catalog);
@@ -667,6 +764,48 @@ function renderStage() {
 }
 
 function renderCubeStage(catalog) {
+  stackLayer.innerHTML = renderCubeScene(catalog, {
+    rotationX: state.cubeRotationX,
+    rotationY: state.cubeRotationY,
+    interactive: true,
+    cubeId: "catalogCube",
+    sceneId: "cubeScene"
+  });
+
+  const scene = document.getElementById("cubeScene");
+  const cube = document.getElementById("catalogCube");
+  attachCubeInteraction(scene, cube, catalog.id);
+}
+
+function renderCubeWallStage(selectedCatalogs) {
+  const wallClass = `cube-wall count-${Math.min(selectedCatalogs.length, 4)} ${selectedCatalogs.length > 4 ? "dense" : ""}`;
+  stackLayer.innerHTML = `
+    <div class="${wallClass}">
+      ${selectedCatalogs.map((catalog, catalogIndex) => renderCubeScene(catalog, {
+        rotationX: -14 + ((catalogIndex % 2) * 6),
+        rotationY: 22 + (catalogIndex * 24),
+        interactive: false,
+        sceneClass: "cube-scene auto-spin wall-scene",
+        cubeClass: "catalog-cube wall-cube",
+        sceneStyle: `animation-delay: -${catalogIndex * 2.4}s;`,
+        catalogIndex
+      })).join("")}
+    </div>
+  `;
+
+  stackLayer.querySelectorAll(".wall-scene").forEach((scene) => {
+    scene.addEventListener("click", (event) => {
+      const catalogId = scene.dataset.catalogId;
+      const faceIndex = getCubeFaceIndexFromElement(event.target);
+      activateCatalog(catalogId, "Focused from cube wall");
+      if (faceIndex !== null) {
+        openCubeFace(faceIndex, catalogId);
+      }
+    });
+  });
+}
+
+function renderCubeScene(catalog, options = {}) {
   const faces = isDiceCatalog(catalog)
     ? buildDiceCubeFaces(catalog)
     : Array.from({ length: 6 }, (_, faceIndex) => {
@@ -678,32 +817,40 @@ function renderCubeStage(catalog) {
         };
       });
   const faceClasses = ["front", "right", "back", "left", "top", "bottom"];
+  const {
+    rotationX = state.cubeRotationX,
+    rotationY = state.cubeRotationY,
+    interactive = false,
+    sceneId = "",
+    cubeId = "",
+    sceneClass = "cube-scene auto-spin",
+    cubeClass = "catalog-cube",
+    sceneStyle = "",
+    catalogIndex = 0
+  } = options;
 
-  stackLayer.innerHTML = `
-    <div class="cube-scene auto-spin" id="cubeScene">
+  return `
+    <div class="${sceneClass}" ${sceneId ? `id="${sceneId}"` : ""} data-catalog-id="${catalog.id}" style="${sceneStyle}">
       <div
-        class="catalog-cube"
-        id="catalogCube"
-        style="transform: rotateX(${state.cubeRotationX}deg) rotateY(${state.cubeRotationY}deg);"
+        class="${cubeClass}"
+        ${cubeId ? `id="${cubeId}"` : ""}
+        style="transform: rotateX(${rotationX}deg) rotateY(${rotationY}deg);"
       >
         ${faces.map((item, faceIndex) => `
           <article
             class="cube-face ${faceClasses[faceIndex]} ${faceIndex === 0 ? "active" : ""}"
             data-index="${item.index}"
+            data-catalog-id="${catalog.id}"
           >
             <div class="cube-face-clip" style="${getCubeFaceStyle(item)}">
               <div class="cube-face-glow"></div>
-              ${(item.assetUrl && getAssetType(item) === "image") ? "" : renderCubeFacePreview(catalog, item, faceIndex)}
+              ${(item.assetUrl && getAssetType(item) === "image") ? "" : renderCubeFacePreview(catalog, item, faceIndex, catalogIndex)}
             </div>
           </article>
         `).join("")}
       </div>
     </div>
   `;
-
-  const scene = document.getElementById("cubeScene");
-  const cube = document.getElementById("catalogCube");
-  attachCubeInteraction(scene, cube);
 }
 
 function renderExpandedStage(catalog) {
@@ -722,10 +869,14 @@ function renderExpandedStage(catalog) {
   `;
 }
 
-function openCubeFace(index) {
+function openCubeFace(index, catalogId = state.activeCatalogId) {
   if (Date.now() < state.suppressCardClickUntil) return;
   stopDemo();
   playUiSound("select");
+  state.activeCatalogId = catalogId;
+  if (!state.selectedCatalogIds.includes(catalogId)) {
+    state.selectedCatalogIds = [catalogId];
+  }
   state.activeIndex = Number(index) || 0;
   state.interactionMode = "fan";
   state.fanOpen = true;
@@ -734,9 +885,9 @@ function openCubeFace(index) {
   renderStage();
 }
 
-function renderCubeFacePreview(catalog, item, faceIndex) {
+function renderCubeFacePreview(catalog, item, faceIndex, catalogIndex = 0) {
   if (isDiceCatalog(catalog)) {
-    return renderDiceFace(catalog, item, faceIndex);
+    return renderDiceFace(catalog, item, faceIndex, catalogIndex);
   }
   if ((item.assetUrl || item.youtubeEmbedId) && getAssetType(item) === "video") {
     return renderCubeVideoFace(item);
@@ -847,10 +998,10 @@ function getDiceFaceLayout(frontValue) {
   return layouts[frontValue] || layouts[1];
 }
 
-function renderDiceFace(catalog, item, faceIndex) {
+function renderDiceFace(catalog, item, faceIndex, catalogIndex = 0) {
   const faceValue = normalizeDiceValue(item.diceValue) || [1, 3, 6, 4, 2, 5][faceIndex] || 1;
   const faceLabel = item.title || `Dice ${faceValue}`;
-  const color = getDiceColor(catalog, item);
+  const color = getDiceColor(catalog, item, faceIndex, catalogIndex);
 
   if (diceDemoVariant === "css") {
     return renderCssDiceFace(faceValue, color, faceLabel);
@@ -859,8 +1010,12 @@ function renderDiceFace(catalog, item, faceIndex) {
   return renderSpriteDiceFace(faceValue, color, faceLabel);
 }
 
-function getDiceColor(catalog, item) {
+function getDiceColor(catalog, item, faceIndex = 0, catalogIndex = 0) {
   const source = `${item?.color || ""} ${catalog?.id || ""} ${catalog?.title || ""}`.toLowerCase();
+  if (source.includes("mixed") || catalog?.id === "dice") {
+    const cycle = ["white", "red", "black"];
+    return cycle[(faceIndex + catalogIndex) % cycle.length];
+  }
   if (source.includes("red")) return "red";
   if (source.includes("black")) return "black";
   if (source.includes("blue")) return "blue";
@@ -1223,7 +1378,7 @@ function renderExpandedAsset(item) {
   }
 }
 
-function attachCubeInteraction(scene, cube) {
+function attachCubeInteraction(scene, cube, catalogId = state.activeCatalogId) {
   scene.addEventListener("pointerdown", (event) => {
     state.cubePointer = {
       id: event.pointerId,
@@ -1263,9 +1418,9 @@ function attachCubeInteraction(scene, cube) {
       releasedFaceIndex &&
       state.cubePointer.startFaceIndex === releasedFaceIndex
     ) {
-      openCubeFace(releasedFaceIndex);
+      openCubeFace(releasedFaceIndex, catalogId);
     } else {
-      openCubeFace(state.activeIndex);
+      openCubeFace(state.activeIndex, catalogId);
     }
 
     state.cubePointer = null;
@@ -1284,8 +1439,15 @@ function getCubeFaceIndexAtPoint(clientX, clientY) {
   return face?.dataset.index || null;
 }
 
+function getCubeFaceIndexFromElement(element) {
+  const face = element.closest?.(".cube-face");
+  if (!face) return null;
+  return face.dataset.index || null;
+}
+
 function returnToWall() {
   state.activeCatalogId = null;
+  state.selectedCatalogIds = [];
   state.activeIndex = 0;
   state.fanOpen = true;
   state.interactionMode = "cube";
@@ -1537,6 +1699,9 @@ function turnCatalog(direction) {
 
 function activateCatalog(catalogId, gestureLabel) {
   state.activeCatalogId = catalogId;
+  state.selectedCatalogIds = state.selectedCatalogIds.includes(catalogId)
+    ? state.selectedCatalogIds
+    : [catalogId];
   state.activeIndex = 0;
   state.fanOpen = true;
   resetCubeMotion();
