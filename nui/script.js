@@ -1263,14 +1263,8 @@ function activateCatalog(catalogId, gestureLabel) {
 
 function goHome() {
   stopDemo();
-  resetCubeMotion();
-  state.activeCatalogId = null;
-  state.activeIndex = 0;
-  state.fanOpen = true;
-  state.interactionMode = "cube";
-  state.lastGesture = "Home";
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  renderEmpty();
+  state.lastGesture = "Home refresh";
+  window.location.reload();
 }
 
 function startDemo() {
