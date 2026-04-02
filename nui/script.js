@@ -731,48 +731,61 @@ function renderStage() {
 
 function renderCarouselStage(catalog) {
   const items = buildCarouselItems(catalog);
-  stackLayer.innerHTML = `
-    <div class="carousel-ring-stage">
-      <div class="carousel-floor"></div>
-      <div class="carousel-ring">
-        ${items.map((item, position) => renderCarouselCard(catalog, item, position, items.length)).join("")}
+  let stage = stackLayer.querySelector(".carousel-ring-stage");
+  let ring = stackLayer.querySelector(".carousel-ring");
+  const shouldRebuild = !stage
+    || !ring
+    || ring.dataset.catalogId !== catalog.id
+    || ring.querySelectorAll(".carousel-ring-card").length !== items.length;
+
+  if (shouldRebuild) {
+    stackLayer.innerHTML = `
+      <div class="carousel-ring-stage">
+        <div class="carousel-floor"></div>
+        <div class="carousel-ring" data-catalog-id="${catalog.id}">
+          ${items.map((item, position) => renderCarouselCard(catalog, item, position, items.length)).join("")}
+        </div>
       </div>
-    </div>
-  `;
+    `;
 
-  const stage = stackLayer.querySelector(".carousel-ring-stage");
-  stage?.addEventListener("wheel", (event) => {
-    event.preventDefault();
-    stopDemo();
-    if (Math.abs(event.deltaY) < 4) return;
-    turnCatalog(event.deltaY > 0 ? 1 : -1);
-  }, { passive: false });
+    stage = stackLayer.querySelector(".carousel-ring-stage");
+    ring = stackLayer.querySelector(".carousel-ring");
 
-  stackLayer.querySelectorAll(".carousel-ring-card").forEach((card) => {
-    card.addEventListener("mouseenter", () => {
-      const cardIndex = Number(card.dataset.index);
-      if (cardIndex === state.activeIndex) return;
+    stage?.addEventListener("wheel", (event) => {
+      event.preventDefault();
       stopDemo();
-      state.activeIndex = cardIndex;
-      state.lastGesture = "Hovered item";
-      renderStage();
-    });
+      if (Math.abs(event.deltaY) < 4) return;
+      turnCatalog(event.deltaY > 0 ? 1 : -1);
+    }, { passive: false });
 
-    card.addEventListener("click", () => {
-      if (Date.now() < state.suppressCardClickUntil) return;
-      const cardIndex = Number(card.dataset.index);
-      stopDemo();
-      if (cardIndex === state.activeIndex) {
-        playUiSound("expand");
-        openZoomView();
-        return;
-      }
-      playUiSound("select");
-      state.activeIndex = cardIndex;
-      state.lastGesture = "Selected item";
-      renderStage();
+    ring?.querySelectorAll(".carousel-ring-card").forEach((card) => {
+      card.addEventListener("mouseenter", () => {
+        const cardIndex = Number(card.dataset.index);
+        if (cardIndex === state.activeIndex) return;
+        stopDemo();
+        state.activeIndex = cardIndex;
+        state.lastGesture = "Hovered item";
+        renderStage();
+      });
+
+      card.addEventListener("click", () => {
+        if (Date.now() < state.suppressCardClickUntil) return;
+        const cardIndex = Number(card.dataset.index);
+        stopDemo();
+        if (cardIndex === state.activeIndex) {
+          playUiSound("expand");
+          openZoomView();
+          return;
+        }
+        playUiSound("select");
+        state.activeIndex = cardIndex;
+        state.lastGesture = "Selected item";
+        renderStage();
+      });
     });
-  });
+  }
+
+  syncCarouselLayout(catalog, ring);
 }
 
 function buildCarouselItems(catalog) {
@@ -783,7 +796,36 @@ function buildCarouselItems(catalog) {
 }
 
 function renderCarouselCard(catalog, item, position, total) {
-  const offset = getCarouselOffset(position, total, state.activeIndex);
+  return `
+    <article
+      class="carousel-ring-card"
+      data-index="${item.index}"
+    >
+      <div class="carousel-card-face">
+        ${renderPreview(catalog, item)}
+      </div>
+    </article>
+  `;
+}
+
+function syncCarouselLayout(catalog, ring) {
+  if (!ring) return;
+  const total = catalog.items.length;
+  ring.querySelectorAll(".carousel-ring-card").forEach((card, position) => {
+    const metrics = getCarouselMetrics(position, total, state.activeIndex);
+    card.classList.toggle("center", metrics.offset === 0);
+    card.style.transform = `translate3d(${metrics.x}px, ${metrics.y}px, ${metrics.z}px)`;
+    card.style.opacity = String(metrics.opacity);
+    card.style.zIndex = String(metrics.zIndex);
+    const face = card.querySelector(".carousel-card-face");
+    if (face) {
+      face.style.transform = `rotateX(${metrics.rotateX}deg) rotateY(${metrics.rotateY}deg) scale(${metrics.scale})`;
+    }
+  });
+}
+
+function getCarouselMetrics(position, total, activeIndex) {
+  const offset = getCarouselOffset(position, total, activeIndex);
   const angleStep = (Math.PI * 2) / Math.max(total, 1);
   const angle = offset * angleStep;
   const viewportWidth = window.innerWidth || 1440;
@@ -791,26 +833,16 @@ function renderCarouselCard(catalog, item, position, total) {
   const radiusX = Math.min(Math.max(viewportWidth * 0.3, 360), 560);
   const radiusZ = Math.min(Math.max(viewportWidth * 0.16, 180), 280);
   const verticalRadius = Math.min(Math.max(viewportHeight * 0.12, 96), 150);
-  const x = Math.sin(angle) * radiusX;
-  const z = Math.cos(angle) * radiusZ;
-  const y = (Math.cos(angle) * verticalRadius) - verticalRadius * 0.24;
-  const normalizedDepth = (z + radiusZ) / (radiusZ * 2);
-  const scale = 0.9 + (normalizedDepth * 0.08) + (offset === 0 ? 0.03 : 0);
-  const rotateY = -Math.sin(angle) * 22;
-  const rotateX = 16 - (normalizedDepth * 11);
+  const x = (Math.sin(angle) * radiusX).toFixed(1);
+  const z = (Math.cos(angle) * radiusZ).toFixed(1);
+  const y = ((Math.cos(angle) * verticalRadius) - (verticalRadius * 0.24)).toFixed(1);
+  const normalizedDepth = ((Number(z) + radiusZ) / (radiusZ * 2));
+  const scale = (0.9 + (normalizedDepth * 0.08) + (offset === 0 ? 0.03 : 0)).toFixed(3);
+  const rotateY = (-Math.sin(angle) * 22).toFixed(2);
+  const rotateX = (16 - (normalizedDepth * 11)).toFixed(2);
   const opacity = getCarouselOpacity(offset, normalizedDepth);
   const zIndex = Math.round((normalizedDepth * 100) + (offset === 0 ? 100 : 0));
-  return `
-    <article
-      class="carousel-ring-card ${offset === 0 ? "center" : ""}"
-      data-index="${item.index}"
-      style="transform: translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(1)}px); opacity:${opacity}; z-index:${zIndex};"
-    >
-      <div class="carousel-card-face" style="transform: rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)});">
-        ${renderPreview(catalog, item)}
-      </div>
-    </article>
-  `;
+  return { offset, x, y, z, scale, rotateX, rotateY, opacity, zIndex };
 }
 
 function getCarouselOffset(position, total, activeIndex) {
