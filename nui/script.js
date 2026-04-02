@@ -138,6 +138,13 @@ const fallbackCatalogs = [
 let catalogs = [];
 const remoteCatalogsUrl = "https://40-160-254-60.sslip.io/motu-lib/catalogs.json";
 const catalogRefreshMs = 15000;
+const viewParams = new URLSearchParams(window.location.search);
+const forcedView = viewParams.get("view");
+const diceDemoVariant = viewParams.get("diceDemo") || "css";
+const isForcedMobileView = forcedView === "mobile";
+const isForcedDesktopView = forcedView === "desktop";
+const userAgent = navigator.userAgent || "";
+const isIPhoneWebKit = /iPhone/i.test(userAgent) && /AppleWebKit/i.test(userAgent);
 
 const dock = document.getElementById("dock");
 const stackLayer = document.getElementById("stackLayer");
@@ -147,6 +154,7 @@ const previousButton = document.getElementById("previousButton");
 const nextButton = document.getElementById("nextButton");
 const demoButton = document.getElementById("demoButton");
 const homeButton = document.getElementById("homeButton");
+const viewToggleButton = document.getElementById("viewToggleButton");
 const cubeButton = document.getElementById("cubeButton");
 const fanButton = document.getElementById("fanButton");
 const spinButton = document.getElementById("spinButton");
@@ -197,8 +205,26 @@ const state = {
   refreshTimer: null
 };
 
+document.body.classList.toggle("force-mobile-view", isForcedMobileView);
+document.body.classList.toggle("force-desktop-view", isForcedDesktopView);
+document.body.classList.toggle("iphone-webkit", isIPhoneWebKit);
+syncViewToggleButton();
+
 setLoadingState();
 void init();
+
+viewToggleButton?.addEventListener("click", () => {
+  const nextParams = new URLSearchParams(window.location.search);
+
+  if (document.body.classList.contains("force-mobile-view")) {
+    nextParams.set("view", "desktop");
+  } else {
+    nextParams.set("view", "mobile");
+  }
+
+  const nextQuery = nextParams.toString();
+  window.location.href = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
+});
 
 fanButton.addEventListener("click", () => {
   setInteractionMode("fan");
@@ -658,10 +684,11 @@ function renderCubeStage(catalog) {
           <article
             class="cube-face ${faceClasses[faceIndex]} ${faceIndex === 0 ? "active" : ""}"
             data-index="${item.index}"
-            style="${getCubeFaceStyle(item)}"
           >
-            <div class="cube-face-glow"></div>
-            ${(item.assetUrl && getAssetType(item) === "image") ? "" : renderCubeFacePreview(catalog, item)}
+            <div class="cube-face-clip" style="${getCubeFaceStyle(item)}">
+              <div class="cube-face-glow"></div>
+              ${(item.assetUrl && getAssetType(item) === "image") ? "" : renderCubeFacePreview(catalog, item, faceIndex)}
+            </div>
           </article>
         `).join("")}
       </div>
@@ -701,13 +728,159 @@ function openCubeFace(index) {
   renderStage();
 }
 
-function renderCubeFacePreview(catalog, item) {
+function renderCubeFacePreview(catalog, item, faceIndex) {
+  if (isDiceCatalog(catalog)) {
+    return renderDiceFace(catalog, item, faceIndex);
+  }
   return renderPreview(catalog, item);
 }
 
 function getCubeFaceStyle(item) {
   if (!item.assetUrl || getAssetType(item) !== "image") return "";
   return `background-image: linear-gradient(145deg, rgba(97, 231, 255, 0.1), rgba(4, 12, 22, 0.08)), url('${item.assetUrl}'); background-size: cover; background-position: center;`;
+}
+
+function isDiceCatalog(catalog) {
+  const source = `${catalog?.id || ""} ${catalog?.title || ""}`.toLowerCase();
+  return source.includes("dice");
+}
+
+function renderDiceFace(catalog, item, faceIndex) {
+  const faceValue = Number(item.diceValue) || [1, 3, 6, 4, 2, 5][faceIndex] || 1;
+  const faceLabel = item.title || `Dice ${faceValue}`;
+  const color = getDiceColor(catalog, item);
+
+  if (diceDemoVariant === "css") {
+    return renderCssDiceFace(faceValue, color, faceLabel);
+  }
+
+  return renderSpriteDiceFace(faceValue, color, faceLabel);
+}
+
+function getDiceColor(catalog, item) {
+  const source = `${item?.color || ""} ${catalog?.id || ""} ${catalog?.title || ""}`.toLowerCase();
+  if (source.includes("red")) return "red";
+  if (source.includes("black")) return "black";
+  if (source.includes("blue")) return "blue";
+  return "white";
+}
+
+function renderSpriteDiceFace(faceValue, color, faceLabel) {
+  return `
+    <div class="dice-face dice-face-sprite ${color}" data-dice-render="sprite" aria-label="${faceLabel}">
+      <div
+        class="dice-sprite-face"
+        style="background-image:url('${getDiceSpriteDataUrl(color)}'); background-position:${getDiceSpritePosition(faceValue)} 50%;"
+      ></div>
+      <div class="dice-face-label">${faceLabel}</div>
+    </div>
+  `;
+}
+
+function renderCssDiceFace(faceValue, color, faceLabel) {
+  return `
+    <div class="dice-face dice-face-css ${color}" data-dice-render="css" aria-label="${faceLabel}">
+      <div class="dice-pip-grid face-${faceValue}">
+        ${Array.from({ length: 9 }, (_, index) => `
+          <span class="dice-pip slot-${index + 1} ${shouldShowPip(faceValue, index + 1) ? "visible" : ""}"></span>
+        `).join("")}
+      </div>
+      <div class="dice-face-label">${faceLabel}</div>
+    </div>
+  `;
+}
+
+function shouldShowPip(faceValue, slot) {
+  const slotMap = {
+    1: [5],
+    2: [1, 9],
+    3: [1, 5, 9],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9]
+  };
+  return (slotMap[faceValue] || []).includes(slot);
+}
+
+function getDiceSpritePosition(faceValue) {
+  const offset = Math.max(0, Math.min(faceValue - 1, 5));
+  return `${offset * 20}%`;
+}
+
+function getDiceSpriteDataUrl(color) {
+  const palettes = {
+    white: {
+      face: "#f7f7f5",
+      edge: "#d5d9df",
+      pip: "#1f2328",
+      glow: "#ffffff"
+    },
+    red: {
+      face: "#d84a4a",
+      edge: "#a52828",
+      pip: "#fbfbfb",
+      glow: "#ffb1b1"
+    },
+    black: {
+      face: "#2b2e33",
+      edge: "#0f1114",
+      pip: "#f4f6f8",
+      glow: "#939aa3"
+    },
+    blue: {
+      face: "#4f7ff5",
+      edge: "#1e49a8",
+      pip: "#f7fbff",
+      glow: "#a7c8ff"
+    }
+  };
+  const palette = palettes[color] || palettes.white;
+  const pipSets = {
+    1: [5],
+    2: [1, 9],
+    3: [1, 5, 9],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9]
+  };
+  const positions = {
+    1: [28, 28],
+    3: [72, 28],
+    4: [28, 50],
+    5: [50, 50],
+    6: [72, 50],
+    7: [28, 72],
+    9: [72, 72]
+  };
+  const faces = Array.from({ length: 6 }, (_, index) => {
+    const faceValue = index + 1;
+    const x = index * 100;
+    const pips = pipSets[faceValue].map((slot) => {
+      const [cx, cy] = positions[slot];
+      return `<circle cx="${x + cx}" cy="${cy}" r="6.5" fill="${palette.pip}" />`;
+    }).join("");
+    return `
+      <g transform="translate(${x},0)">
+        <rect x="9" y="9" width="82" height="82" rx="18" fill="${palette.face}" />
+        <rect x="9" y="9" width="82" height="82" rx="18" fill="url(#shine)" opacity="0.55" />
+        <rect x="9" y="9" width="82" height="82" rx="18" fill="none" stroke="${palette.edge}" stroke-width="2.5" />
+        ${pips}
+      </g>
+    `;
+  }).join("");
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="600" height="100" viewBox="0 0 600 100">
+      <defs>
+        <linearGradient id="shine" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="${palette.glow}" />
+          <stop offset="0.35" stop-color="${palette.glow}" stop-opacity="0.35" />
+          <stop offset="1" stop-color="#000000" stop-opacity="0.08" />
+        </linearGradient>
+      </defs>
+      ${faces}
+    </svg>
+  `.trim();
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 function getAssetType(item) {
@@ -1265,6 +1438,15 @@ function goHome() {
   stopDemo();
   state.lastGesture = "Home refresh";
   window.location.reload();
+}
+
+function syncViewToggleButton() {
+  if (!viewToggleButton) return;
+  viewToggleButton.textContent = isForcedMobileView ? "Desktop" : "Mobile";
+  viewToggleButton.setAttribute(
+    "aria-label",
+    isForcedMobileView ? "Switch to desktop PulseDeck" : "Switch to mobile PulseDeck"
+  );
 }
 
 function startDemo() {

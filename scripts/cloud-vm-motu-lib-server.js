@@ -10,6 +10,7 @@ const port = Number(process.env.MOTU_LIB_PORT || 3018);
 const libraryRoot = process.env.MOTU_LIB_ROOT || "/home/ubuntu/motu_lib";
 const allowedOrigin = process.env.MOTU_LIB_ALLOWED_ORIGIN || "https://labmotu-jss1.github.io";
 const accentCycle = ["cyan", "lime", "amber", "rose"];
+const diceFaceOrder = [1, 2, 3, 4, 5, 6];
 
 const mimeTypes = {
   ".png": "image/png",
@@ -74,6 +75,15 @@ function formatItemTitle(fileName) {
 function classifyCatalog(folderName) {
   const lowered = folderName.toLowerCase();
 
+  if (lowered.includes("dice")) {
+    return {
+      mode: "fan",
+      badge: "Dice Cube",
+      preview: "media",
+      description: "Rotate a synthetic six-face dice cube generated directly from the folder color."
+    };
+  }
+
   if (lowered.includes("event") || lowered.includes("log")) {
     return {
       mode: "binder",
@@ -136,6 +146,34 @@ function getAssetType(ext) {
   return "file";
 }
 
+function isDiceCatalog(folderName) {
+  return folderName.toLowerCase().includes("dice");
+}
+
+function getDiceColor(folderName) {
+  const lowered = folderName.toLowerCase();
+  if (lowered.includes("red")) return "red";
+  if (lowered.includes("black")) return "black";
+  if (lowered.includes("blue")) return "blue";
+  return "white";
+}
+
+function buildVirtualDiceItems(folderName, folderPath) {
+  const titlePrefix = formatCatalogTitle(folderName);
+  const color = getDiceColor(folderName);
+  return diceFaceOrder.map((value) => ({
+    title: `${titlePrefix} ${value}`,
+    description: `${titlePrefix} virtual face ${value} generated from ${folderPath}.`,
+    meta: ["DICE", color.toUpperCase(), "Live VM"],
+    preview: "media",
+    assetType: "dice",
+    extension: ".dice",
+    diceValue: value,
+    color,
+    sourcePath: folderPath
+  }));
+}
+
 function addCorsHeaders(res) {
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
   res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
@@ -177,7 +215,7 @@ function listCatalogs() {
       .filter((file) => allowedExts.has(file.ext))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    const items = files.map((file, fileIndex) => {
+    const fileItems = files.map((file, fileIndex) => {
       const stats = fs.statSync(file.fullPath);
       const assetType = getAssetType(file.ext);
       return {
@@ -195,10 +233,11 @@ function listCatalogs() {
         sourcePath: file.fullPath
       };
     });
+    const items = fileItems.length > 0 ? fileItems : (isDiceCatalog(folderName) ? buildVirtualDiceItems(folderName, folderPath) : []);
 
     const descriptionParts = [
       kind.description,
-      `${files.length} files currently available on the VM.`
+      `${items.length} items currently available on the VM.`
     ];
     const dateLabel = formatDateLabel(folderName);
     if (dateLabel) {
@@ -209,7 +248,7 @@ function listCatalogs() {
       id: slugify(folderName),
       title: formatCatalogTitle(folderName),
       mode: kind.mode,
-      badge: `${kind.badge} · ${files.length}`,
+      badge: `${kind.badge} · ${items.length}`,
       description: descriptionParts.join(" "),
       accent: accentCycle[index % accentCycle.length],
       sourcePath: folderPath,
