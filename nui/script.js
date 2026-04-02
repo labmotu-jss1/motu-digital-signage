@@ -465,7 +465,7 @@ function getActiveCatalog() {
 
 async function init() {
   catalogs = await loadCatalogs();
-  catalogCount.textContent = `${catalogs.length} Catalogs`;
+  if (catalogCount) catalogCount.textContent = `${catalogs.length} Catalogs`;
   renderDock();
   renderModes();
 
@@ -548,8 +548,8 @@ function isLegacyDiceCatalog(catalog) {
 }
 
 function setLoadingState() {
-  catalogCount.textContent = "Loading";
-  stageTitle.textContent = "Loading catalog";
+  if (catalogCount) catalogCount.textContent = "Loading";
+  if (stageTitle) stageTitle.textContent = "Loading catalog";
   expandItemButton.disabled = true;
 }
 
@@ -571,7 +571,7 @@ async function refreshCatalogs() {
 
   const currentId = state.activeCatalogId;
   catalogs = nextCatalogs;
-  catalogCount.textContent = `${catalogs.length} Catalogs`;
+  if (catalogCount) catalogCount.textContent = `${catalogs.length} Catalogs`;
 
   if (!currentId || !catalogs.some((catalog) => catalog.id === currentId)) {
     renderDock();
@@ -628,8 +628,8 @@ function renderEmpty() {
   state.activeCatalogId = null;
   state.zoomOpen = false;
   state.zoomScale = 1;
-  stageTitle.textContent = "Select a catalog";
-  catalogCount.textContent = `${catalogs.length} Catalogs`;
+  if (stageTitle) stageTitle.textContent = "Select a catalog";
+  if (catalogCount) catalogCount.textContent = `${catalogs.length} Catalogs`;
   stackLayer.innerHTML = "";
   expandItemButton.disabled = true;
   previousButton.disabled = true;
@@ -664,7 +664,7 @@ function renderStage() {
   const stageElement = document.getElementById("stage");
   stageElement?.classList.toggle("expanded-mode", state.zoomOpen);
 
-  stageTitle.textContent = catalog.title;
+  if (stageTitle) stageTitle.textContent = catalog.title;
   demoButton.classList.toggle("active-demo", state.demoRunning);
   demoButton.textContent = state.demoRunning ? "Stop" : "Demo";
   previousButton.disabled = state.zoomOpen ? state.activeIndex <= 0 : false;
@@ -731,18 +731,33 @@ function renderStage() {
 
 function renderCarouselStage(catalog) {
   const items = buildCarouselItems(catalog);
-  const angleStep = 360 / Math.max(items.length, 1);
-  const ringRotation = -(state.activeIndex * angleStep);
   stackLayer.innerHTML = `
     <div class="carousel-ring-stage">
       <div class="carousel-floor"></div>
-      <div class="carousel-ring" style="transform: rotateY(${ringRotation}deg);">
-        ${items.map((item, position) => renderCarouselCard(catalog, item, position, angleStep)).join("")}
+      <div class="carousel-ring">
+        ${items.map((item, position) => renderCarouselCard(catalog, item, position, items.length)).join("")}
       </div>
     </div>
   `;
 
+  const stage = stackLayer.querySelector(".carousel-ring-stage");
+  stage?.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    stopDemo();
+    if (Math.abs(event.deltaY) < 4) return;
+    turnCatalog(event.deltaY > 0 ? 1 : -1);
+  }, { passive: false });
+
   stackLayer.querySelectorAll(".carousel-ring-card").forEach((card) => {
+    card.addEventListener("mouseenter", () => {
+      const cardIndex = Number(card.dataset.index);
+      if (cardIndex === state.activeIndex) return;
+      stopDemo();
+      state.activeIndex = cardIndex;
+      state.lastGesture = "Hovered item";
+      renderStage();
+    });
+
     card.addEventListener("click", () => {
       if (Date.now() < state.suppressCardClickUntil) return;
       const cardIndex = Number(card.dataset.index);
@@ -767,16 +782,32 @@ function buildCarouselItems(catalog) {
   }));
 }
 
-function renderCarouselCard(catalog, item, position, angleStep) {
-  const angle = position * angleStep;
-  const offset = getCarouselOffset(position, catalog.items.length, state.activeIndex);
+function renderCarouselCard(catalog, item, position, total) {
+  const offset = getCarouselOffset(position, total, state.activeIndex);
+  const angleStep = (Math.PI * 2) / Math.max(total, 1);
+  const angle = offset * angleStep;
+  const viewportWidth = window.innerWidth || 1440;
+  const viewportHeight = window.innerHeight || 900;
+  const radiusX = Math.min(Math.max(viewportWidth * 0.26, 320), 470);
+  const radiusZ = Math.min(Math.max(viewportWidth * 0.13, 150), 220);
+  const backLift = Math.min(Math.max(viewportHeight * 0.11, 76), 128);
+  const x = Math.sin(angle) * radiusX;
+  const z = Math.cos(angle) * radiusZ;
+  const y = (z < 0 ? -((-z / radiusZ) * backLift) : 0) + (offset === 0 ? -22 : 0);
+  const normalizedDepth = (z + radiusZ) / (radiusZ * 2);
+  const scale = 0.84 + (normalizedDepth * 0.18) + (offset === 0 ? 0.05 : 0);
+  const rotateY = -Math.sin(angle) * 14;
+  const opacity = getCarouselOpacity(offset, normalizedDepth);
+  const zIndex = Math.round((normalizedDepth * 100) + (offset === 0 ? 100 : 0));
   return `
     <article
       class="carousel-ring-card ${offset === 0 ? "center" : ""}"
       data-index="${item.index}"
-      style="transform: rotateY(${angle}deg) translateZ(var(--carousel-radius)); opacity:${getCarouselOpacity(offset)};"
+      style="transform: translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(1)}px); opacity:${opacity}; z-index:${zIndex};"
     >
-      ${renderPreview(catalog, item)}
+      <div class="carousel-card-face" style="transform: rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)});">
+        ${renderPreview(catalog, item)}
+      </div>
     </article>
   `;
 }
@@ -788,13 +819,13 @@ function getCarouselOffset(position, total, activeIndex) {
   return offset;
 }
 
-function getCarouselOpacity(offset) {
+function getCarouselOpacity(offset, normalizedDepth = 0.5) {
   const distance = Math.abs(offset);
   if (distance === 0) return 1;
-  if (distance === 1) return 0.88;
-  if (distance === 2) return 0.58;
-  if (distance === 3) return 0.34;
-  return 0.18;
+  if (distance === 1) return Math.max(0.8, 0.82 + (normalizedDepth * 0.14));
+  if (distance === 2) return Math.max(0.62, 0.68 + (normalizedDepth * 0.12));
+  if (distance === 3) return Math.max(0.48, 0.56 + (normalizedDepth * 0.1));
+  return 0.42;
 }
 
 function renderCubeStage(catalog) {
@@ -861,7 +892,7 @@ function renderCubeScene(catalog, options = {}) {
 
 function renderExpandedStage(catalog) {
   const activeItem = getActiveItem();
-  stageTitle.textContent = activeItem?.title || catalog.title;
+  if (stageTitle) stageTitle.textContent = activeItem?.title || catalog.title;
 
   if (!activeItem) {
     stackLayer.innerHTML = "";

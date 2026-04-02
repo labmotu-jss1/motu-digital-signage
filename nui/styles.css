@@ -250,13 +250,14 @@ body::before {
 .stage-panel {
   grid-area: stage;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 2px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
 }
 
 .dock-panel {
   grid-area: dock;
-  padding-top: 2px;
+  padding-top: 0;
+  padding-bottom: 4px;
 }
 
 .panel-head {
@@ -387,7 +388,7 @@ body::before {
   border-radius: 30px;
   border: 1px solid var(--line);
   overflow: hidden;
-  min-height: 760px;
+  min-height: 820px;
   background:
     radial-gradient(circle at 18% 22%, rgba(175, 255, 155, 0.14), transparent 20%),
     radial-gradient(circle at 82% 18%, rgba(255, 160, 160, 0.14), transparent 18%),
@@ -415,17 +416,17 @@ body::before {
   place-items: center;
   overflow: hidden;
   perspective: 2000px;
+  touch-action: none;
 }
 
 .carousel-ring {
-  --carousel-radius: clamp(320px, 30vw, 430px);
   position: relative;
   width: min(1500px, 98vw);
-  height: min(720px, calc(100% - 2px));
+  height: min(860px, 100%);
   display: grid;
   place-items: center;
   transform-style: preserve-3d;
-  transition: transform 420ms cubic-bezier(0.22, 0.8, 0.2, 1);
+  transform: rotateX(7deg);
 }
 
 .carousel-floor {
@@ -443,9 +444,18 @@ body::before {
 
 .carousel-ring-card {
   position: absolute;
-  width: clamp(180px, 15vw, 240px);
-  height: clamp(250px, 33vh, 330px);
-  border-radius: 22px;
+  width: clamp(180px, 13vw, 214px);
+  height: clamp(236px, 29vh, 276px);
+  transform-origin: center center;
+  transition: transform 420ms cubic-bezier(0.22, 0.8, 0.2, 1), opacity 240ms ease, filter 240ms ease;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+.carousel-card-face {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
   overflow: hidden;
   border: 1px solid rgba(194, 239, 255, 0.18);
   background:
@@ -454,22 +464,21 @@ body::before {
   box-shadow:
     0 22px 60px rgba(0, 0, 0, 0.34),
     inset 0 0 0 1px rgba(255, 255, 255, 0.03);
-  transform-origin: center center;
-  transition: opacity 240ms ease, box-shadow 240ms ease, filter 240ms ease;
-  will-change: transform;
+  transition: transform 420ms cubic-bezier(0.22, 0.8, 0.2, 1), box-shadow 320ms ease, filter 320ms ease;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-.carousel-ring-card.center {
+.carousel-ring-card.center .carousel-card-face {
   box-shadow:
-    0 42px 120px rgba(0, 0, 0, 0.48),
-    0 0 24px rgba(103, 239, 255, 0.14),
+    0 34px 90px rgba(0, 0, 0, 0.42),
+    0 0 18px rgba(103, 239, 255, 0.12),
     inset 0 0 0 1px rgba(255, 255, 255, 0.07);
-  filter: brightness(1.06);
+  filter: brightness(1.08) saturate(1.04);
 }
 
-.carousel-ring-card .preview-shell {
+.carousel-ring-card .preview-shell,
+.carousel-card-face .preview-shell {
   width: 100%;
   height: 100%;
   min-height: 100%;
@@ -494,7 +503,7 @@ body::before {
 .carousel-ring-card .preview-shell.audio,
 .carousel-ring-card .preview-shell.text,
 .carousel-ring-card .preview-shell.pdf {
-  padding: 10px;
+  padding: 0;
 }
 
 .carousel-ring-card .asset-title {
@@ -508,7 +517,7 @@ body::before {
 
 body.fullscreen-on .dock-panel {
   padding-top: 0;
-  padding-bottom: 2px;
+  padding-bottom: 0;
 }
 
 body.fullscreen-on .dock-card {
