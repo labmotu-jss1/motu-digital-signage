@@ -772,7 +772,6 @@ function renderSpriteDiceFace(faceValue, color, faceLabel) {
         class="dice-sprite-face"
         style="background-image:url('${getDiceSpriteDataUrl(color)}'); background-position:${getDiceSpritePosition(faceValue)} 50%;"
       ></div>
-      <div class="dice-face-label">${faceLabel}</div>
     </div>
   `;
 }
@@ -785,7 +784,6 @@ function renderCssDiceFace(faceValue, color, faceLabel) {
           <span class="dice-pip slot-${index + 1} ${shouldShowPip(faceValue, index + 1) ? "visible" : ""}"></span>
         `).join("")}
       </div>
-      <div class="dice-face-label">${faceLabel}</div>
     </div>
   `;
 }

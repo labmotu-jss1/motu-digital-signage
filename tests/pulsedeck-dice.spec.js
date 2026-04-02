@@ -35,7 +35,7 @@ test("dice sprite cube works across the three color catalogs", async ({ page }, 
   await expect(page.locator(".cube-face.front .dice-face.white")).toBeVisible();
 
   await page.locator("#nextButton").click();
-  await expect(page.locator(".cube-face.front .dice-face-label")).toContainText("white Two");
+  await expect(page.locator(".cube-face.front .dice-face.white")).toBeVisible();
 
   await page.locator("#dock .dock-card").nth(1).click();
   await expect(page.locator("#stageTitle")).toHaveText("Dice Red");
@@ -55,7 +55,6 @@ test("dice css cube works across the three color catalogs", async ({ page }) => 
   await expect(page.locator(".cube-face.front .dice-pip.visible")).toHaveCount(1);
 
   await page.locator("#nextButton").click();
-  await expect(page.locator(".cube-face.front .dice-face-label")).toContainText("white Two");
   await expect(page.locator(".cube-face.front .dice-pip.visible")).toHaveCount(2);
 
   await page.locator("#dock .dock-card").nth(1).click();

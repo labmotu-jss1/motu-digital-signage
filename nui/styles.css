@@ -555,22 +555,6 @@ body.iphone-webkit .cube-face.bottom { transform: rotateX(-89.6deg) translateZ(c
   opacity: 1;
 }
 
-.dice-face-label {
-  position: absolute;
-  left: 50%;
-  bottom: 7%;
-  transform: translateX(-50%);
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  background: rgba(7, 14, 22, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(247, 250, 253, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
 .cube-preview {
   height: 100%;
   border: 0;
@@ -1251,11 +1235,6 @@ body.force-mobile-view .dice-pip-grid {
   height: 82%;
 }
 
-body.force-mobile-view .dice-face-label {
-  font-size: 0.66rem;
-  bottom: 6%;
-}
-
 body.force-mobile-view .stack-card {
   width: min(92vw, 300px);
   min-height: 280px;
@@ -1569,11 +1548,6 @@ body.force-mobile-view .audio-stage-card {
   .dice-pip-grid {
     width: 82%;
     height: 82%;
-  }
-
-  .dice-face-label {
-    font-size: 0.66rem;
-    bottom: 6%;
   }
 
   .stack-card {
