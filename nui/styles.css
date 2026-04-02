@@ -132,6 +132,14 @@ body::before {
   gap: 6px;
 }
 
+.topbar-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar-actions {
+  scrollbar-width: none;
+}
+
 .control-button,
 .panel-pill,
 .detail-chip {
@@ -1018,7 +1026,7 @@ body::before {
 
 @media (max-width: 900px) {
   .wall-app {
-    padding: 62px 8px 8px;
+    padding: 92px 8px 8px;
     gap: 6px;
   }
 
@@ -1029,7 +1037,7 @@ body::before {
   }
 
   .topbar {
-    padding: 14px 16px;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) calc(10px + env(safe-area-inset-right, 0px)) 10px calc(10px + env(safe-area-inset-left, 0px));
     flex-direction: column;
     align-items: stretch;
     top: 0;
@@ -1044,27 +1052,41 @@ body::before {
   }
 
   .topbar-brand h1 {
-    font-size: clamp(1rem, 4.4vw, 1.2rem);
+    font-size: clamp(0.98rem, 4vw, 1.16rem);
   }
 
   .topbar-actions {
     width: 100%;
+    flex-wrap: nowrap;
     justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
   }
 
   .control-gap {
-    width: clamp(18px, 5vw, 0.5in);
-    flex-basis: clamp(18px, 5vw, 0.5in);
+    width: clamp(12px, 4vw, 18px);
+    flex: 0 0 clamp(12px, 4vw, 18px);
   }
 
   .control-button,
   .panel-pill,
   .detail-chip {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
+  }
+
+  .control-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    scroll-snap-align: start;
   }
 
   .stage {
-    min-height: 520px;
+    min-height: 500px;
   }
 
   .stage.expanded-mode {
@@ -1072,13 +1094,13 @@ body::before {
   }
 
   .stack-card {
-    width: min(90vw, 330px);
-    min-height: 320px;
-    padding: 14px;
+    width: min(91vw, 318px);
+    min-height: 296px;
+    padding: 12px;
   }
 
   .preview-shell {
-    height: 150px;
+    height: 142px;
   }
 
   .zoom-overlay {
@@ -1100,4 +1122,164 @@ body::before {
     max-height: calc(100vh - 240px);
   }
 
+}
+
+@media (max-width: 520px) {
+  .wall-app {
+    padding-top: 88px;
+  }
+
+  .topbar {
+    gap: 8px;
+  }
+
+  .topbar-brand {
+    gap: 6px;
+  }
+
+  .eyebrow {
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+  }
+
+  .control-button {
+    padding: 7px 11px;
+    font-size: 0.76rem;
+  }
+
+  .stage-panel,
+  .dock-panel {
+    padding: 7px;
+  }
+
+  .panel-head {
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .panel-head h3 {
+    font-size: 0.98rem;
+  }
+
+  .stage-headline {
+    gap: 7px;
+  }
+
+  .stage-headline .eyebrow {
+    font-size: 0.58rem;
+  }
+
+  .panel-pill {
+    padding: 6px 9px;
+    font-size: 0.72rem;
+  }
+
+  .dock-list {
+    gap: 8px;
+  }
+
+  .dock-card {
+    padding: 7px 10px;
+    border-radius: 13px;
+  }
+
+  .dock-card h4 {
+    font-size: 0.88rem;
+  }
+
+  .stage {
+    min-height: 470px;
+    border-radius: 24px;
+  }
+
+  .stage.expanded-mode {
+    min-height: calc(100vh - 84px);
+  }
+
+  .cube-scene {
+    width: min(84vw, 360px);
+    height: min(84vw, 360px);
+  }
+
+  .catalog-cube {
+    width: min(70vw, 286px);
+    height: min(70vw, 286px);
+  }
+
+  .cube-face,
+  .cube-face .preview-shell,
+  .cube-preview {
+    border-radius: 24px;
+  }
+
+  .stack-card {
+    width: min(92vw, 300px);
+    min-height: 280px;
+    border-radius: 28px;
+    padding: 10px;
+  }
+
+  .stack-card.carousel-card {
+    width: min(52vw, 188px);
+    min-height: 320px;
+    border-radius: 24px;
+  }
+
+  .stack-card.carousel-card .preview-shell,
+  .preview-shell {
+    border-radius: 20px;
+  }
+
+  .preview-shell {
+    height: 132px;
+  }
+
+  .asset-badge {
+    padding: 5px 8px;
+    font-size: 0.68rem;
+  }
+
+  .asset-title {
+    font-size: 0.8rem;
+  }
+
+  .video-icon {
+    border-top-width: 18px;
+    border-bottom-width: 18px;
+    border-left-width: 28px;
+  }
+
+  .asset-wave {
+    gap: 6px;
+  }
+
+  .asset-wave span {
+    width: 7px;
+  }
+
+  .text-lines,
+  .pdf-sheet {
+    width: min(80%, 220px);
+  }
+
+  .expanded-stage-card {
+    width: min(calc(100vw - 18px), 1400px);
+    height: min(calc(100vh - 82px), 1180px);
+    border-radius: 24px;
+  }
+
+  .expanded-stage-media,
+  .expanded-stage-video,
+  .expanded-stage-frame {
+    border-radius: 18px;
+  }
+
+  .audio-stage {
+    padding: 18px;
+  }
+
+  .audio-stage-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
 }
