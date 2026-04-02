@@ -187,6 +187,11 @@ const state = {
   activeIndex: 0,
   fanOpen: false,
   interactionMode: "carousel",
+  carouselAngle: 0,
+  carouselTargetAngle: 0,
+  carouselTiltX: 17,
+  carouselTargetTiltX: 17,
+  carouselAnimationFrame: null,
   cubeRotationX: -18,
   cubeRotationY: 24,
   cubePointer: null,
@@ -243,6 +248,10 @@ resetButton.addEventListener("click", () => {
   playUiSound("return");
   resetCubeMotion();
   state.activeIndex = 0;
+  state.carouselAngle = 0;
+  state.carouselTargetAngle = 0;
+  state.carouselTiltX = 17;
+  state.carouselTargetTiltX = 17;
   state.interactionMode = "cube";
   state.lastGesture = "Returned to cube";
   renderModes();
@@ -649,6 +658,9 @@ function setInteractionMode(mode) {
   stopDemo();
   playUiSound("select");
   state.interactionMode = mode;
+  if (mode === "carousel") {
+    focusCarouselIndex(state.activeIndex, catalog.items.length);
+  }
   state.lastGesture = `Mode: ${mode}`;
   renderModes();
   renderStage();
@@ -755,17 +767,29 @@ function renderCarouselStage(catalog) {
       event.preventDefault();
       stopDemo();
       if (Math.abs(event.deltaY) < 4) return;
-      turnCatalog(event.deltaY > 0 ? 1 : -1);
+      nudgeCarousel(event.deltaY * 0.0018);
     }, { passive: false });
+
+    stage?.addEventListener("pointermove", (event) => {
+      const rect = stage.getBoundingClientRect();
+      const ratioY = rect.height ? ((event.clientY - rect.top) / rect.height) : 0.5;
+      state.carouselTargetTiltX = 9 + (ratioY * 24);
+      ensureCarouselAnimation(catalog, ring);
+    });
+
+    stage?.addEventListener("pointerleave", () => {
+      state.carouselTargetTiltX = 17;
+      ensureCarouselAnimation(catalog, ring);
+    });
 
     ring?.querySelectorAll(".carousel-ring-card").forEach((card) => {
       card.addEventListener("mouseenter", () => {
         const cardIndex = Number(card.dataset.index);
         if (cardIndex === state.activeIndex) return;
         stopDemo();
-        state.activeIndex = cardIndex;
+        focusCarouselIndex(cardIndex, catalog.items.length);
         state.lastGesture = "Hovered item";
-        renderStage();
+        ensureCarouselAnimation(catalog, ring);
       });
 
       card.addEventListener("click", () => {
@@ -778,14 +802,15 @@ function renderCarouselStage(catalog) {
           return;
         }
         playUiSound("select");
-        state.activeIndex = cardIndex;
+        focusCarouselIndex(cardIndex, catalog.items.length);
         state.lastGesture = "Selected item";
-        renderStage();
+        ensureCarouselAnimation(catalog, ring);
       });
     });
   }
 
   syncCarouselLayout(catalog, ring);
+  ensureCarouselAnimation(catalog, ring);
 }
 
 function buildCarouselItems(catalog) {
@@ -810,9 +835,10 @@ function renderCarouselCard(catalog, item, position, total) {
 
 function syncCarouselLayout(catalog, ring) {
   if (!ring) return;
+  ring.style.transform = `rotateX(${state.carouselTiltX.toFixed(2)}deg)`;
   const total = catalog.items.length;
   ring.querySelectorAll(".carousel-ring-card").forEach((card, position) => {
-    const metrics = getCarouselMetrics(position, total, state.activeIndex);
+    const metrics = getCarouselMetrics(position, total, state.carouselAngle);
     card.classList.toggle("center", metrics.offset === 0);
     card.style.transform = `translate3d(${metrics.x}px, ${metrics.y}px, ${metrics.z}px)`;
     card.style.opacity = String(metrics.opacity);
@@ -824,10 +850,11 @@ function syncCarouselLayout(catalog, ring) {
   });
 }
 
-function getCarouselMetrics(position, total, activeIndex) {
-  const offset = getCarouselOffset(position, total, activeIndex);
+function getCarouselMetrics(position, total, carouselAngle) {
   const angleStep = (Math.PI * 2) / Math.max(total, 1);
-  const angle = offset * angleStep;
+  const rawAngle = (position * angleStep) + carouselAngle;
+  const angle = normalizeOrbitAngle(rawAngle);
+  const offset = Math.round(normalizeOrbitAngle(rawAngle) / angleStep);
   const viewportWidth = window.innerWidth || 1440;
   const viewportHeight = window.innerHeight || 900;
   const radiusX = Math.min(Math.max(viewportWidth * 0.3, 360), 560);
@@ -843,6 +870,59 @@ function getCarouselMetrics(position, total, activeIndex) {
   const opacity = getCarouselOpacity(offset, normalizedDepth);
   const zIndex = Math.round((normalizedDepth * 100) + (offset === 0 ? 100 : 0));
   return { offset, x, y, z, scale, rotateX, rotateY, opacity, zIndex };
+}
+
+function normalizeOrbitAngle(angle) {
+  let next = angle;
+  const turn = Math.PI * 2;
+  while (next > Math.PI) next -= turn;
+  while (next < -Math.PI) next += turn;
+  return next;
+}
+
+function nudgeCarousel(deltaAngle) {
+  const catalog = getActiveCatalog();
+  if (!catalog || state.interactionMode !== "carousel") return;
+  state.carouselTargetAngle = normalizeOrbitAngle(state.carouselTargetAngle - deltaAngle);
+  syncActiveIndexFromAngle(catalog.items.length);
+  renderStage();
+}
+
+function focusCarouselIndex(index, total) {
+  const angleStep = (Math.PI * 2) / Math.max(total, 1);
+  state.activeIndex = index;
+  state.carouselTargetAngle = normalizeOrbitAngle(-(index * angleStep));
+}
+
+function syncActiveIndexFromAngle(total) {
+  const angleStep = (Math.PI * 2) / Math.max(total, 1);
+  const normalized = normalizeOrbitAngle(-state.carouselTargetAngle);
+  state.activeIndex = ((Math.round(normalized / angleStep) % total) + total) % total;
+}
+
+function ensureCarouselAnimation(catalog, ring) {
+  if (state.carouselAnimationFrame) return;
+  const animate = () => {
+    const angleDelta = normalizeOrbitAngle(state.carouselTargetAngle - state.carouselAngle);
+    const tiltDelta = state.carouselTargetTiltX - state.carouselTiltX;
+    state.carouselAngle = normalizeOrbitAngle(state.carouselAngle + (angleDelta * 0.16));
+    state.carouselTiltX += tiltDelta * 0.16;
+    syncActiveIndexFromAngle(catalog.items.length);
+    syncCarouselLayout(catalog, ring);
+
+    if (Math.abs(angleDelta) < 0.0015 && Math.abs(tiltDelta) < 0.05) {
+      state.carouselAngle = state.carouselTargetAngle;
+      state.carouselTiltX = state.carouselTargetTiltX;
+      syncActiveIndexFromAngle(catalog.items.length);
+      syncCarouselLayout(catalog, ring);
+      state.carouselAnimationFrame = null;
+      return;
+    }
+
+    state.carouselAnimationFrame = window.requestAnimationFrame(animate);
+  };
+
+  state.carouselAnimationFrame = window.requestAnimationFrame(animate);
 }
 
 function getCarouselOffset(position, total, activeIndex) {
@@ -945,6 +1025,7 @@ function openCubeFace(index, catalogId = state.activeCatalogId) {
   playUiSound("select");
   state.activeCatalogId = catalogId;
   state.activeIndex = Number(index) || 0;
+  focusCarouselIndex(state.activeIndex, getActiveCatalog()?.items?.length || 1);
   state.interactionMode = "carousel";
   state.lastGesture = "Cube face opened";
   renderModes();
@@ -1689,6 +1770,10 @@ function goHomeFromZoom() {
   stopDemo();
   resetCubeMotion();
   state.activeIndex = 0;
+  state.carouselAngle = 0;
+  state.carouselTargetAngle = 0;
+  state.carouselTiltX = 17;
+  state.carouselTargetTiltX = 17;
   state.fanOpen = false;
   state.interactionMode = "carousel";
   state.lastGesture = "Home from zoom";
@@ -1753,6 +1838,15 @@ function turnCatalog(direction) {
     return;
   }
 
+  if (state.interactionMode === "carousel") {
+    const angleStep = (Math.PI * 2) / Math.max(catalog.items.length, 1);
+    state.carouselTargetAngle = normalizeOrbitAngle(state.carouselTargetAngle - (direction * angleStep));
+    syncActiveIndexFromAngle(catalog.items.length);
+    state.lastGesture = direction > 0 ? "Carousel next" : "Carousel previous";
+    renderStage();
+    return;
+  }
+
   state.pendingBinderTurn = catalog.mode === "binder"
     ? direction > 0 ? "turn-forward" : "turn-back"
     : null;
@@ -1778,6 +1872,10 @@ function turnCatalog(direction) {
 function activateCatalog(catalogId, gestureLabel) {
   state.activeCatalogId = catalogId;
   state.activeIndex = 0;
+  state.carouselAngle = 0;
+  state.carouselTargetAngle = 0;
+  state.carouselTiltX = 17;
+  state.carouselTargetTiltX = 17;
   state.fanOpen = false;
   resetCubeMotion();
   state.interactionMode = "cube";
