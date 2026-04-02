@@ -256,6 +256,7 @@ body::before {
 
 .dock-panel {
   grid-area: dock;
+  padding-top: 4px;
 }
 
 .panel-head {
@@ -300,6 +301,16 @@ body::before {
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 10px;
+  position: relative;
+}
+
+.dock-list::before {
+  content: "v";
+  color: rgba(191, 208, 225, 0.82);
+  font-size: 0.92rem;
+  line-height: 1;
+  align-self: center;
+  margin-right: 2px;
 }
 
 .dock-card {
@@ -433,6 +444,60 @@ body::before {
 
 .wall-scene:hover .wall-cube {
   transform: scale(1.02);
+}
+
+.fan-wall {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  align-items: center;
+  justify-items: center;
+  padding: 18px;
+}
+
+.fan-wall.dense {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.fan-wall-scene {
+  position: relative;
+  width: min(100%, 320px);
+  height: 360px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.fan-wall-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.fan-wall .stack-card {
+  width: 220px;
+  height: 300px;
+}
+
+.fan-wall-scene .stack-card:hover {
+  transform: none;
+}
+
+.fan-wall-label {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 241, 255, 0.18);
+  background: rgba(7, 18, 30, 0.78);
+  color: #f4f8fc;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(10px);
 }
 
 .gesture-hint {

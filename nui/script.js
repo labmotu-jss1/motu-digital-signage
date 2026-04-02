@@ -712,6 +712,15 @@ function renderStage() {
     return;
   }
 
+  if (state.interactionMode === "fan" && !state.zoomOpen && selectedCatalogs.length > 1) {
+    renderFanWallStage(selectedCatalogs);
+    expandItemButton.disabled = true;
+    previousButton.disabled = false;
+    nextButton.disabled = false;
+    renderZoomView();
+    return;
+  }
+
   if (state.interactionMode === "cube") {
     renderCubeStage(catalog);
     expandItemButton.disabled = true;
@@ -803,6 +812,44 @@ function renderCubeWallStage(selectedCatalogs) {
       }
     });
   });
+}
+
+function renderFanWallStage(selectedCatalogs) {
+  const wallClass = `fan-wall ${selectedCatalogs.length > 4 ? "dense" : ""}`;
+  stackLayer.innerHTML = `
+    <div class="${wallClass}">
+      ${selectedCatalogs.map((catalog) => renderFanWallCatalog(catalog)).join("")}
+    </div>
+  `;
+
+  stackLayer.querySelectorAll(".fan-wall-scene").forEach((scene) => {
+    scene.addEventListener("click", () => {
+      const catalogId = scene.dataset.catalogId;
+      activateCatalog(catalogId, "Focused from fan wall");
+      state.interactionMode = "fan";
+      renderModes();
+      renderStage();
+    });
+  });
+}
+
+function renderFanWallCatalog(catalog) {
+  const items = catalog.items
+    .slice(0, Math.min(catalog.items.length, 4))
+    .map((item, index) => ({
+      ...item,
+      index,
+      relative: index
+    }));
+
+  return `
+    <div class="fan-wall-scene" data-catalog-id="${catalog.id}">
+      <div class="fan-wall-stack">
+        ${items.map((item) => renderCard(catalog, item)).join("")}
+      </div>
+      <div class="fan-wall-label">${catalog.title}</div>
+    </div>
+  `;
 }
 
 function renderCubeScene(catalog, options = {}) {
