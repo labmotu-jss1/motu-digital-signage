@@ -361,7 +361,7 @@ body::before {
 .dock-check-indicator {
   width: 18px;
   height: 18px;
-  border-radius: 999px;
+  border-radius: 5px;
   border: 1px solid rgba(200, 241, 255, 0.26);
   background: rgba(7, 18, 30, 0.76);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -369,16 +369,23 @@ body::before {
 }
 
 .dock-check-indicator::after {
-  content: "";
+  content: "✓";
   position: absolute;
-  inset: 3px;
-  border-radius: inherit;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #04131b;
+  font-size: 0.78rem;
+  font-weight: 900;
   background: linear-gradient(180deg, var(--cyan), var(--lime));
-  transform: scale(0);
-  transition: transform 140ms ease;
+  border-radius: inherit;
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity 140ms ease, transform 140ms ease;
 }
 
 .dock-check-input:checked + .dock-check-indicator::after {
+  opacity: 1;
   transform: scale(1);
 }
 
