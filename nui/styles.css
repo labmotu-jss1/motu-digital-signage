@@ -256,7 +256,7 @@ body::before {
 
 .dock-panel {
   grid-area: dock;
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 .panel-head {
@@ -300,13 +300,13 @@ body::before {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dock-card {
   position: relative;
   overflow: visible;
-  padding: 6px 10px;
+  padding: 5px 9px;
   border-radius: 14px;
   border: 1px solid var(--line);
   background:
@@ -338,7 +338,7 @@ body::before {
 
 .dock-card h4 {
   margin: 0;
-  font-size: 0.96rem;
+  font-size: 0.9rem;
   line-height: 1.05;
   white-space: nowrap;
   display: inline-block;
@@ -387,7 +387,7 @@ body::before {
   border-radius: 30px;
   border: 1px solid var(--line);
   overflow: hidden;
-  min-height: 700px;
+  min-height: 760px;
   background:
     radial-gradient(circle at 18% 22%, rgba(175, 255, 155, 0.14), transparent 20%),
     radial-gradient(circle at 82% 18%, rgba(255, 160, 160, 0.14), transparent 18%),
@@ -414,23 +414,26 @@ body::before {
   display: grid;
   place-items: center;
   overflow: hidden;
+  perspective: 2000px;
 }
 
 .carousel-ring {
+  --carousel-radius: clamp(320px, 30vw, 430px);
   position: relative;
-  width: min(1400px, 96vw);
-  height: min(620px, calc(100% - 12px));
+  width: min(1500px, 98vw);
+  height: min(720px, calc(100% - 2px));
   display: grid;
   place-items: center;
   transform-style: preserve-3d;
+  transition: transform 420ms cubic-bezier(0.22, 0.8, 0.2, 1);
 }
 
 .carousel-floor {
   position: absolute;
   left: 8%;
   right: 8%;
-  bottom: 5%;
-  height: 36%;
+  bottom: 8%;
+  height: 28%;
   border-radius: 50%;
   background:
     radial-gradient(circle at center, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.02) 60%, rgba(0, 0, 0, 0) 76%);
@@ -440,8 +443,8 @@ body::before {
 
 .carousel-ring-card {
   position: absolute;
-  width: clamp(150px, 17vw, 260px);
-  aspect-ratio: 0.72;
+  width: clamp(180px, 15vw, 240px);
+  height: clamp(250px, 33vh, 330px);
   border-radius: 22px;
   overflow: hidden;
   border: 1px solid rgba(194, 239, 255, 0.18);
@@ -452,8 +455,10 @@ body::before {
     0 22px 60px rgba(0, 0, 0, 0.34),
     inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   transform-origin: center center;
-  transition: transform 240ms ease, opacity 240ms ease, box-shadow 240ms ease;
+  transition: opacity 240ms ease, box-shadow 240ms ease, filter 240ms ease;
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .carousel-ring-card.center {
@@ -461,6 +466,7 @@ body::before {
     0 42px 120px rgba(0, 0, 0, 0.48),
     0 0 24px rgba(103, 239, 255, 0.14),
     inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  filter: brightness(1.06);
 }
 
 .carousel-ring-card .preview-shell {
@@ -488,15 +494,25 @@ body::before {
 .carousel-ring-card .preview-shell.audio,
 .carousel-ring-card .preview-shell.text,
 .carousel-ring-card .preview-shell.pdf {
-  padding: 14px;
+  padding: 10px;
 }
 
 .carousel-ring-card .asset-title {
   position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 12px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
   padding-top: 0;
+  font-size: 0.84rem;
+}
+
+body.fullscreen-on .dock-panel {
+  padding-top: 0;
+  padding-bottom: 2px;
+}
+
+body.fullscreen-on .dock-card {
+  padding: 4px 8px;
 }
 
 .wall-scene {

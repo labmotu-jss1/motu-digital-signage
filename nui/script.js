@@ -731,11 +731,13 @@ function renderStage() {
 
 function renderCarouselStage(catalog) {
   const items = buildCarouselItems(catalog);
+  const angleStep = 360 / Math.max(items.length, 1);
+  const ringRotation = -(state.activeIndex * angleStep);
   stackLayer.innerHTML = `
     <div class="carousel-ring-stage">
       <div class="carousel-floor"></div>
-      <div class="carousel-ring">
-        ${items.map((item) => renderCarouselCard(catalog, item)).join("")}
+      <div class="carousel-ring" style="transform: rotateY(${ringRotation}deg);">
+        ${items.map((item, position) => renderCarouselCard(catalog, item, position, angleStep)).join("")}
       </div>
     </div>
   `;
@@ -759,49 +761,40 @@ function renderCarouselStage(catalog) {
 }
 
 function buildCarouselItems(catalog) {
-  const offsets = [-3, -2, -1, 0, 1, 2, 3];
-  return offsets
-    .filter((offset, position) => position < catalog.items.length)
-    .map((offset) => {
-      const index = (state.activeIndex + offset + catalog.items.length) % catalog.items.length;
-      return {
-        ...catalog.items[index],
-        index,
-        relative: offset
-      };
-    });
+  return catalog.items.map((item, index) => ({
+    ...item,
+    index
+  }));
 }
 
-function renderCarouselCard(catalog, item) {
-  const layout = computeCarouselLayout(item.relative);
+function renderCarouselCard(catalog, item, position, angleStep) {
+  const angle = position * angleStep;
+  const offset = getCarouselOffset(position, catalog.items.length, state.activeIndex);
   return `
     <article
-      class="carousel-ring-card ${item.relative === 0 ? "center" : ""}"
+      class="carousel-ring-card ${offset === 0 ? "center" : ""}"
       data-index="${item.index}"
-      style="transform:${layout.transform}; opacity:${layout.opacity}; z-index:${layout.zIndex};"
+      style="transform: rotateY(${angle}deg) translateZ(var(--carousel-radius)); opacity:${getCarouselOpacity(offset)};"
     >
       ${renderPreview(catalog, item)}
     </article>
   `;
 }
 
-function computeCarouselLayout(relative) {
-  const slot = Math.max(-3, Math.min(relative, 3));
-  const layoutMap = {
-    "-3": { x: -560, y: 122, rotate: 70, scale: 0.36, opacity: 0.18, z: 10 },
-    "-2": { x: -360, y: 56, rotate: 54, scale: 0.58, opacity: 0.42, z: 30 },
-    "-1": { x: -170, y: 10, rotate: 28, scale: 0.82, opacity: 0.76, z: 60 },
-    "0": { x: 0, y: -8, rotate: 0, scale: 1.16, opacity: 1, z: 120 },
-    "1": { x: 170, y: 10, rotate: -28, scale: 0.82, opacity: 0.76, z: 60 },
-    "2": { x: 360, y: 56, rotate: -54, scale: 0.58, opacity: 0.42, z: 30 },
-    "3": { x: 560, y: 122, rotate: -70, scale: 0.36, opacity: 0.18, z: 10 }
-  };
-  const layout = layoutMap[String(slot)];
-  return {
-    transform: `translateX(${layout.x}px) translateY(${layout.y}px) rotateY(${layout.rotate}deg) scale(${layout.scale})`,
-    opacity: layout.opacity,
-    zIndex: layout.z
-  };
+function getCarouselOffset(position, total, activeIndex) {
+  let offset = position - activeIndex;
+  if (offset > total / 2) offset -= total;
+  if (offset < -(total / 2)) offset += total;
+  return offset;
+}
+
+function getCarouselOpacity(offset) {
+  const distance = Math.abs(offset);
+  if (distance === 0) return 1;
+  if (distance === 1) return 0.88;
+  if (distance === 2) return 0.58;
+  if (distance === 3) return 0.34;
+  return 0.18;
 }
 
 function renderCubeStage(catalog) {
