@@ -21,6 +21,7 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+  height: 100%;
   color: var(--text);
   font-family: "Manrope", sans-serif;
   background:
@@ -29,8 +30,8 @@ body {
     radial-gradient(circle at 50% 100%, rgba(175, 255, 155, 0.1), transparent 28%),
     linear-gradient(140deg, var(--bg-1), var(--bg-2));
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: auto;
 }
 
 body::before {
@@ -46,11 +47,13 @@ body::before {
 }
 
 .wall-app {
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
   padding: 58px 10px 10px;
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 6px;
+  overflow: hidden;
 }
 
 .topbar,
@@ -239,12 +242,15 @@ body::before {
     "dock";
   gap: 6px;
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .dock-panel,
 .stage-panel {
   padding: 6px 8px;
   min-height: 0;
+  overflow: hidden;
 }
 
 .stage-panel {
@@ -299,9 +305,14 @@ body::before {
 
 .dock-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
   gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
 }
 
 .dock-card {
@@ -1349,11 +1360,12 @@ body.force-mobile-view {
 }
 
 body.force-mobile-view .wall-app {
-  max-width: 430px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 88px 8px 8px;
   gap: 6px;
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
 }
 
 body.force-mobile-view .topbar,
@@ -1363,8 +1375,8 @@ body.force-mobile-view .stage-panel {
 }
 
 body.force-mobile-view .topbar {
-  max-width: 430px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: calc(10px + env(safe-area-inset-top, 0px)) calc(10px + env(safe-area-inset-right, 0px)) 10px calc(10px + env(safe-area-inset-left, 0px));
   flex-direction: column;
   align-items: stretch;
@@ -1597,13 +1609,14 @@ body.force-mobile-view .audio-stage-card {
   html,
   body {
     overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: auto;
+    touch-action: none;
   }
 
   .wall-app {
-    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100dvh;
   }
 
   .dock-list {

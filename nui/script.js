@@ -207,7 +207,8 @@ const state = {
   lastTapAt: 0,
   zoomOpen: false,
   zoomScale: 1,
-  refreshTimer: null
+  refreshTimer: null,
+  fullscreenOptOut: false
 };
 
 document.body.classList.toggle("force-mobile-view", isForcedMobileView);
@@ -315,8 +316,10 @@ demoButton.addEventListener("click", () => {
 
 fullscreenButton.addEventListener("click", async () => {
   if (!document.fullscreenElement) {
+    state.fullscreenOptOut = false;
     await enterFullscreenIfNeeded();
   } else {
+    state.fullscreenOptOut = true;
     await document.exitFullscreen();
     document.body.classList.remove("fullscreen-on");
     fullscreenButton.textContent = "Full";
@@ -328,6 +331,11 @@ document.addEventListener("fullscreenchange", () => {
   document.body.classList.toggle("fullscreen-on", inFullscreen);
   fullscreenButton.textContent = inFullscreen ? "Exit" : "Full";
 });
+
+document.addEventListener("pointerdown", () => {
+  if (state.fullscreenOptOut || document.fullscreenElement) return;
+  void enterFullscreenIfNeeded();
+}, { passive: true });
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
@@ -762,7 +770,7 @@ function renderCarouselStage(catalog) {
       event.preventDefault();
       stopDemo();
       if (Math.abs(event.deltaY) < 4) return;
-      nudgeCarousel(event.deltaY * 0.0018);
+      nudgeCarousel(event.deltaY * -0.0018);
     }, { passive: false });
 
     stage?.addEventListener("pointermove", (event) => {
@@ -773,7 +781,7 @@ function renderCarouselStage(catalog) {
         const deltaX = event.clientX - state.carouselDrag.lastX;
         const deltaY = event.clientY - state.carouselDrag.lastY;
         state.carouselTargetAngle = normalizeOrbitAngle(
-          state.carouselTargetAngle - (deltaX * 0.0048)
+          state.carouselTargetAngle + (deltaX * 0.0048)
         );
         state.carouselTargetTiltX = Math.max(7, Math.min(36, state.carouselTargetTiltX + (deltaY * 0.08)));
         state.carouselDrag.lastX = event.clientX;
@@ -917,7 +925,7 @@ function normalizeOrbitAngle(angle) {
 function nudgeCarousel(deltaAngle) {
   const catalog = getActiveCatalog();
   if (!catalog || state.interactionMode !== "carousel") return;
-  state.carouselTargetAngle = normalizeOrbitAngle(state.carouselTargetAngle - deltaAngle);
+  state.carouselTargetAngle = normalizeOrbitAngle(state.carouselTargetAngle + deltaAngle);
   syncActiveIndexFromAngle(catalog.items.length);
   renderStage();
 }
@@ -1874,7 +1882,7 @@ function turnCatalog(direction) {
 
   if (state.interactionMode === "carousel") {
     const angleStep = (Math.PI * 2) / Math.max(catalog.items.length, 1);
-    state.carouselTargetAngle = normalizeOrbitAngle(state.carouselTargetAngle - (direction * angleStep));
+    state.carouselTargetAngle = normalizeOrbitAngle(state.carouselTargetAngle + (direction * angleStep));
     syncActiveIndexFromAngle(catalog.items.length);
     state.lastGesture = direction > 0 ? "Carousel next" : "Carousel previous";
     renderStage();
