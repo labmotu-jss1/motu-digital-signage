@@ -147,6 +147,7 @@ const modePills = document.getElementById("modePills");
 const previousButton = document.getElementById("previousButton");
 const nextButton = document.getElementById("nextButton");
 const demoButton = document.getElementById("demoButton");
+const homeButton = document.getElementById("homeButton");
 const fanButton = document.getElementById("fanButton");
 const resetButton = document.getElementById("resetButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
@@ -210,6 +211,11 @@ fanButton.addEventListener("click", () => {
   }
   renderModes();
   renderStage();
+});
+
+homeButton.addEventListener("click", () => {
+  playUiSound("return");
+  goHome();
 });
 
 resetButton.addEventListener("click", () => {
@@ -552,7 +558,11 @@ function canUseMode(catalog, mode) {
 }
 
 function renderEmpty() {
+  state.activeCatalogId = null;
+  state.zoomOpen = false;
+  state.zoomScale = 1;
   stageTitle.textContent = "Select a catalog";
+  catalogCount.textContent = `${catalogs.length} Catalogs`;
   stackLayer.innerHTML = "";
   expandItemButton.disabled = true;
   previousButton.disabled = true;
@@ -562,7 +572,10 @@ function renderEmpty() {
   demoButton.textContent = "Demo";
   fanButton.textContent = "Fan";
   expandItemButton.textContent = "Expand";
-  closeZoomView();
+  zoomOverlay.hidden = true;
+  document.body.classList.remove("zoom-open");
+  renderDock();
+  renderModes();
 }
 
 function renderStage() {
@@ -1258,6 +1271,18 @@ function activateCatalog(catalogId, gestureLabel) {
   renderDock();
   renderModes();
   renderStage();
+}
+
+function goHome() {
+  stopDemo();
+  resetCubeMotion();
+  state.activeCatalogId = null;
+  state.activeIndex = 0;
+  state.fanOpen = true;
+  state.interactionMode = "cube";
+  state.lastGesture = "Home";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  renderEmpty();
 }
 
 function startDemo() {
