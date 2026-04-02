@@ -201,7 +201,6 @@ const catalogRefreshMs = 15000;
 const viewParams = new URLSearchParams(window.location.search);
 const forcedView = viewParams.get("view");
 const diceDemoVariant = viewParams.get("diceDemo") || "css";
-const demoMode = viewParams.get("demo");
 const isForcedMobileView = forcedView === "mobile";
 const isForcedDesktopView = forcedView === "desktop";
 const userAgent = navigator.userAgent || "";
@@ -552,9 +551,7 @@ async function loadCatalogs() {
 
 function withInjectedCatalogs(nextCatalogs) {
   const baseCatalogs = Array.isArray(nextCatalogs) ? [...nextCatalogs] : [];
-  if (demoMode === "history-cube") {
-    baseCatalogs.unshift(historyBroadcastCatalog);
-  }
+  baseCatalogs.unshift(historyBroadcastCatalog);
   return baseCatalogs;
 }
 
